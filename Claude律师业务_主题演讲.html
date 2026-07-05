@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude × 律师 · 主题演讲</title>
+<style>
+  :root{
+    --bg:#080f1c;--bg2:#0d1828;--panel:#15263d;--panel2:#1a2f49;
+    --ink:#eef3f9;--muted:#9bb0c8;--dim:#6b7f98;
+    --gold:#c9a35e;--gold2:#e6cf9c;--cyan:#5fd0e0;--cyan2:#8ce8f4;
+    --green:#5fc08a;--red:#e8806f;--violet:#9d8cf0;
+    --line:rgba(201,163,94,.26);--cyl:rgba(95,208,224,.3);
+    --serif:"Songti SC","STSong",Georgia,serif;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,sans-serif;
+    --mono:"SF Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink)}
+  #bgfx{position:fixed;inset:0;z-index:0}
+  .deck{position:fixed;inset:0;z-index:1}
+  .slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+    padding:6vh 7vw;opacity:0;transform:translateY(30px) scale(.992);
+    transition:opacity .55s cubic-bezier(.2,.7,.2,1),transform .55s cubic-bezier(.2,.7,.2,1);
+    pointer-events:none;overflow:hidden}
+  .slide.active{opacity:1;transform:none;pointer-events:auto}
+  .kicker{color:var(--gold);letter-spacing:.34em;font-size:12.5px;font-weight:700;margin-bottom:16px;text-transform:uppercase}
+  .kicker .seg{color:var(--cyan)}
+  h1{font-family:var(--serif);font-size:clamp(34px,5.6vw,72px);line-height:1.1;font-weight:700;letter-spacing:.02em}
+  h2{font-family:var(--serif);font-size:clamp(25px,3.4vw,46px);font-weight:700;line-height:1.18}
+  .lead{color:var(--muted);font-size:clamp(15px,1.45vw,20px);line-height:1.7;max-width:56ch;margin-top:16px}
+  .gold{color:var(--gold2)}.cyan{color:var(--cyan2)}
+  .hr{height:1px;background:linear-gradient(90deg,var(--gold),transparent);width:130px;margin:22px 0}
+  .reveal>*{opacity:0;transform:translateY(16px);transition:.6s}
+  .slide.active .reveal>*{opacity:1;transform:none}
+  .slide.active .reveal>*:nth-child(1){transition-delay:.05s}
+  .slide.active .reveal>*:nth-child(2){transition-delay:.15s}
+  .slide.active .reveal>*:nth-child(3){transition-delay:.25s}
+  .slide.active .reveal>*:nth-child(4){transition-delay:.35s}
+  .slide.active .reveal>*:nth-child(5){transition-delay:.45s}
+  .slide.active .reveal>*:nth-child(6){transition-delay:.55s}
+
+  /* section divider */
+  .divider{align-items:flex-start}
+  .divider .bignum{font-family:var(--serif);font-size:clamp(80px,16vw,220px);line-height:.8;
+    background:linear-gradient(135deg,var(--gold2),var(--gold) 40%,transparent 90%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    opacity:0;transform:scale(1.22);filter:blur(12px);transition:opacity 1s .1s,transform 1s .1s cubic-bezier(.2,.7,.2,1),filter 1s .1s}
+  .slide.divider.active .bignum{opacity:.9;transform:none;filter:none}
+
+  /* auto tour badge */
+  .autobadge{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:70;display:none;
+    align-items:center;gap:9px;background:rgba(8,15,28,.85);border:1px solid var(--line);border-radius:999px;
+    padding:8px 18px;font-size:12.5px;color:var(--gold2);backdrop-filter:blur(8px)}
+  .autobadge .spin{display:inline-block;animation:rot 2.4s linear infinite}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  .divider h2{margin-top:10px}
+
+  /* cover */
+  .cover-mark{display:flex;align-items:center;gap:14px;margin-bottom:30px}
+  .cover-foot{position:absolute;bottom:6vh;left:7vw;right:7vw;display:flex;justify-content:space-between;align-items:center;color:var(--dim);font-size:13.5px}
+  .badge{border:1px solid var(--line);border-radius:999px;padding:6px 15px;color:var(--gold2);font-size:12px;letter-spacing:.06em;margin-right:10px}
+  .badge.c{border-color:var(--cyl);color:var(--cyan2)}
+
+  /* generic cards */
+  .grid{display:grid;gap:16px;margin-top:26px}
+  .g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr 1fr}
+  .card{background:linear-gradient(180deg,var(--panel),rgba(21,38,61,.5));border:1px solid rgba(255,255,255,.06);
+    border-radius:16px;padding:20px;transition:transform .25s,border-color .25s}
+  .card:hover{transform:translateY(-4px);border-color:var(--line)}
+  .card .ico{font-size:24px;margin-bottom:10px}.card h3{font-size:16.5px;margin-bottom:6px}
+  .card p{color:var(--muted);font-size:13px;line-height:1.6}
+  .tag{display:inline-block;font-size:11px;color:var(--cyan2);border:1px solid var(--cyl);border-radius:6px;padding:2px 8px;margin-top:10px}
+
+  /* model selector */
+  .models{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:24px}
+  .mcard{position:relative;border-radius:16px;padding:22px 18px;cursor:pointer;overflow:hidden;
+    border:1px solid rgba(255,255,255,.08);background:var(--panel);transition:.3s}
+  .mcard::after{content:"";position:absolute;inset:0;opacity:0;transition:.3s;
+    background:radial-gradient(120% 80% at 50% 0%,rgba(201,163,94,.18),transparent)}
+  .mcard:hover,.mcard.on{transform:translateY(-6px);border-color:var(--gold)}
+  .mcard.on::after,.mcard:hover::after{opacity:1}
+  .mcard .mt{font-family:var(--serif);font-size:21px;font-weight:700}
+  .mcard .mid{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:3px}
+  .mcard .mrole{color:var(--gold2);font-size:13px;margin-top:14px;font-weight:600}
+  .mbar{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--cyan));margin-top:14px;transform-origin:left;animation:grow 1s ease both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .mdetail{margin-top:22px;background:#0a1524;border:1px solid var(--line);border-radius:14px;padding:22px 26px;min-height:96px;
+    opacity:0;transform:translateY(10px);transition:.35s}
+  .mdetail.show{opacity:1;transform:none}
+  .mdetail h3{color:var(--gold2);font-size:18px;margin-bottom:8px}
+  .mdetail p{color:var(--muted);font-size:14.5px;line-height:1.75;max-width:78ch}
+  .mdetail .use{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}
+  .mdetail .use span{font-size:12.5px;background:var(--panel2);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:5px 11px;color:var(--ink)}
+
+  /* tabs (chat features) */
+  .tabs{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
+  .tab{cursor:pointer;border:1px solid rgba(255,255,255,.1);background:var(--panel);border-radius:10px;
+    padding:11px 20px;font-size:14.5px;font-weight:600;color:var(--muted);transition:.25s}
+  .tab.on{background:var(--gold);color:#1a1205;border-color:var(--gold)}
+  .tabbody{margin-top:22px;display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:center;min-height:38vh}
+  .tabbody .txt h3{font-family:var(--serif);font-size:26px;color:var(--gold2);margin-bottom:12px}
+  .tabbody .txt p{color:var(--muted);font-size:15px;line-height:1.8;margin-bottom:14px}
+  .tabbody .txt .sc{font-size:13.5px;color:var(--cyan2);border-left:2px solid var(--cyan);padding-left:14px;line-height:1.7}
+  .visual{background:#0a1524;border:1px solid var(--line);border-radius:16px;height:38vh;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+
+  /* project UI mockup */
+  .pj{background:#070e1a;border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    box-shadow:0 30px 60px -34px rgba(0,0,0,.8);height:56vh;display:flex;flex-direction:column}
+  .pj-head{display:flex;align-items:center;gap:12px;padding:13px 18px;background:#0b1726;border-bottom:1px solid rgba(255,255,255,.07)}
+  .pj-head .pico{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--gold),#8a6c35);display:flex;align-items:center;justify-content:center;font-size:15px}
+  .pj-head .pt{font-weight:700;font-size:15px}
+  .pj-head .ps{font-size:11.5px;color:var(--dim);margin-top:1px}
+  .pj-head .pbadge{margin-left:auto;font-size:11px;color:var(--cyan2);border:1px solid var(--cyl);border-radius:999px;padding:4px 12px}
+  .pj-main{flex:1;display:grid;grid-template-columns:340px 1fr;min-height:0}
+  .pj-side{border-right:1px solid rgba(255,255,255,.07);padding:14px 16px;overflow-y:auto;background:#091322}
+  .pj-sec{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:10px 0 8px}
+  .pj-instr{background:#0e1d31;border:1px solid var(--line);border-radius:10px;padding:11px 13px;
+    font-size:12px;line-height:1.75;color:#cdd9e8;min-height:88px;white-space:pre-wrap}
+  .pj-file{display:flex;align-items:center;gap:10px;background:#0e1d31;border:1px solid rgba(255,255,255,.07);
+    border-radius:9px;padding:8px 11px;margin-bottom:7px;font-size:12.5px;
+    opacity:0;transform:translateX(-22px);transition:.45s cubic-bezier(.2,.8,.3,1)}
+  .pj-file.in{opacity:1;transform:none}
+  .pj-file .fic{font-size:15px}
+  .pj-file .fn{flex:1;color:#dbe5f1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pj-file .fs{font-size:10.5px;color:var(--dim)}
+  .pj-file .ok2{color:var(--green);font-size:13px;opacity:0;transition:.3s}
+  .pj-file.in .ok2{opacity:1;transition-delay:.3s}
+  .pj-chat{display:flex;flex-direction:column;padding:16px 20px;gap:12px;overflow-y:auto;min-height:0}
+  .pj-bub{max-width:84%;padding:11px 15px;border-radius:13px;font-size:13px;line-height:1.75;
+    opacity:0;transform:translateY(12px);transition:.45s}
+  .pj-bub.show{opacity:1;transform:none}
+  .pj-bub.u{align-self:flex-end;background:var(--panel2);border:1px solid rgba(255,255,255,.08);border-bottom-right-radius:4px}
+  .pj-bub.a{align-self:flex-start;background:linear-gradient(180deg,#11243b,#0b1726);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .pj-bub .who2{font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px;opacity:.8}
+  .pj-bub.u .who2{color:var(--cyan2)}.pj-bub.a .who2{color:var(--gold2)}
+  .pj-bub b{color:var(--gold2);font-weight:600}
+  .pj-bub .cite{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--cyan2);
+    background:rgba(95,208,224,.08);border:1px solid var(--cyl);border-radius:6px;padding:2px 8px;margin:2px 2px 0 0}
+  .pj-foot{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;border-top:1px solid rgba(255,255,255,.07);background:#0b1726}
+
+  /* artifacts mockup */
+  .af-main{flex:1;display:grid;grid-template-columns:1fr 1.18fr;min-height:0}
+  .af-panel{border-left:1px solid rgba(255,255,255,.07);background:#0a1626;display:flex;flex-direction:column;
+    transform:translateX(102%);transition:.65s cubic-bezier(.2,.8,.2,1);min-height:0}
+  .af-panel.in{transform:none}
+  .af-bar{display:flex;align-items:center;gap:9px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.07);font-size:12.5px}
+  .af-bar .at{font-weight:650;color:var(--gold2)}
+  .af-act{margin-left:auto;display:flex;gap:6px}
+  .af-act span{font-size:10.5px;border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:3px 9px;color:var(--muted)}
+  .af-body{flex:1;overflow-y:auto;padding:14px 16px}
+  table.afm{width:100%;border-collapse:collapse;font-size:12px}
+  .afm th{text-align:left;color:var(--gold);font-size:10.5px;letter-spacing:.08em;padding:7px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .afm td{padding:9px;border-bottom:1px solid rgba(255,255,255,.05);color:#cdd9e8;line-height:1.55;vertical-align:top}
+  .afm tr.row{opacity:0;transform:translateY(8px);transition:.4s}
+  .afm tr.row.in{opacity:1;transform:none}
+  .lvl{display:inline-block;font-size:10.5px;border-radius:5px;padding:2px 8px;font-weight:700;white-space:nowrap}
+  .lvl.r{background:rgba(232,128,111,.15);color:var(--red);border:1px solid rgba(232,128,111,.4)}
+  .lvl.y{background:rgba(224,178,74,.13);color:#e0b24a;border:1px solid rgba(224,178,74,.4)}
+  .lvl.g{background:rgba(95,192,138,.13);color:var(--green);border:1px solid rgba(95,192,138,.4)}
+
+  /* skills mockup */
+  .sk-main{flex:1;display:grid;grid-template-columns:330px 1fr;min-height:0}
+  .sk-lib{border-right:1px solid rgba(255,255,255,.07);padding:12px 14px;overflow-y:auto;background:#091322}
+  .sk-item{display:flex;align-items:center;gap:9px;background:#0e1d31;border:1px solid rgba(255,255,255,.07);
+    border-radius:9px;padding:8px 11px;margin-bottom:7px;transition:.35s;cursor:pointer}
+  .sk-item:hover{border-color:var(--cyl);transform:translateX(3px)}
+  .sk-item .sic{font-size:14px}
+  .sk-item .sn{flex:1;min-width:0}
+  .sk-item .sn .snn{font-family:var(--mono);font-size:10.5px;color:var(--cyan2)}
+  .sk-item .sn .snd{font-size:11.5px;color:#cdd9e8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sk-item.fire{border-color:var(--gold);background:#16294366;box-shadow:0 0 0 1px var(--line),0 10px 28px -16px rgba(201,163,94,.6)}
+  .sk-run{display:flex;flex-direction:column;min-height:0;padding:14px 18px;gap:12px;overflow-y:auto}
+  .sk-cmd{font-family:var(--mono);font-size:13px;background:#0a1626;border:1px solid rgba(255,255,255,.1);
+    border-radius:10px;padding:11px 14px;color:#dbe5f1;min-height:42px}
+  .sk-cmd .ps1{color:var(--gold)}
+  .sk-out{background:#0a1626;border:1px solid var(--line);border-radius:12px;padding:14px 16px;flex:1;opacity:0;transition:.5s;min-height:0;overflow-y:auto}
+  .sk-out.in{opacity:1}
+  .sk-out .sot{font-size:13px;font-weight:650;color:var(--gold2);margin-bottom:12px}
+  .tl-item{display:flex;align-items:baseline;gap:10px;padding:5px 0;font-size:12.5px;opacity:0;transform:translateX(-14px);transition:.4s}
+  .tl-item.in{opacity:1;transform:none}
+  .tl-item .tld{font-family:var(--mono);font-size:11px;color:var(--cyan2);min-width:86px}
+  .tl-item .tlt{color:#cdd9e8;line-height:1.5}
+  .tl-tag{display:inline-block;font-size:10px;background:rgba(201,163,94,.13);border:1px solid var(--line);color:var(--gold2);border-radius:5px;padding:1px 7px;margin-left:7px;white-space:nowrap}
+  .tl-tag.warn{background:rgba(232,128,111,.12);border-color:rgba(232,128,111,.4);color:var(--red)}
+
+  /* good question compare */
+  .qq{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:24px}
+  .qbox{border-radius:16px;padding:22px 24px;border:1px solid}
+  .qbox.bad{border-color:rgba(232,128,111,.35);background:linear-gradient(180deg,rgba(232,128,111,.07),transparent)}
+  .qbox.good{border-color:rgba(95,192,138,.4);background:linear-gradient(180deg,rgba(95,192,138,.08),transparent)}
+  .qbox .ql{font-size:12px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:12px}
+  .qbox.bad .ql{color:var(--red)}.qbox.good .ql{color:var(--green)}
+  .qbox .qt{font-size:14.5px;line-height:1.8;color:var(--ink)}
+  .qbox .qt em{color:var(--gold2);font-style:normal;background:rgba(201,163,94,.13);border-radius:3px;padding:0 3px}
+  .qprin{margin-top:22px;display:flex;gap:12px;flex-wrap:wrap}
+  .qprin span{font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 16px;color:var(--gold2);cursor:pointer;transition:.25s}
+  .qprin span.lit{transform:translateY(-2px)}
+  .qprin span.lit[data-p="0"]{background:rgba(201,163,94,.22);border-color:var(--gold);color:#f2e2bd}
+  .qprin span.lit[data-p="1"]{background:rgba(95,208,224,.18);border-color:var(--cyan);color:#bdeef7}
+  .qprin span.lit[data-p="2"]{background:rgba(95,192,138,.18);border-color:var(--green);color:#bfe9d0}
+  .qprin span.lit[data-p="3"]{background:rgba(157,140,240,.2);border-color:var(--violet);color:#d6cdfb}
+  .qprin span.lit[data-p="4"]{background:rgba(232,128,111,.18);border-color:var(--red);color:#f6c4ba}
+  .qtoggle{display:flex;gap:10px;margin-top:18px}
+  .qtoggle button{cursor:pointer;background:var(--panel);border:1px solid rgba(255,255,255,.1);color:var(--muted);
+    border-radius:9px;padding:8px 16px;font-size:13px;font-weight:600;font-family:var(--sans);transition:.25s}
+  .qtoggle button.on{background:var(--gold);color:#1a1205;border-color:var(--gold)}
+  .qseg{border-radius:4px;padding:0 2px;transition:.25s}
+  .qseg.lit[data-p="0"]{background:rgba(201,163,94,.28);color:#f2e2bd}
+  .qseg.lit[data-p="1"]{background:rgba(95,208,224,.24);color:#bdeef7}
+  .qseg.lit[data-p="2"]{background:rgba(95,192,138,.24);color:#bfe9d0}
+  .qseg.lit[data-p="3"]{background:rgba(157,140,240,.26);color:#d6cdfb}
+  .qseg.lit[data-p="4"]{background:rgba(232,128,111,.24);color:#f6c4ba}
+
+  /* deep research svg */
+  .research{margin-top:20px;position:relative;height:52vh}
+  .research svg{width:100%;height:100%}
+  .rlink{stroke:var(--cyl);stroke-width:1.6;fill:none;stroke-dasharray:6 6;opacity:0;
+    transition:opacity .4s}
+  .rlink.on{opacity:.8;animation:dash 1.2s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .rnode{opacity:0;transform-box:fill-box;transform-origin:center;transition:.45s}
+  .rnode.on{opacity:1}
+  .rstep{position:absolute;bottom:0;left:50%;transform:translateX(-50%);color:var(--cyan2);font-size:14px;letter-spacing:.05em}
+
+  /* dialogue (thinking partner) */
+  .chat{margin-top:20px;max-width:980px;width:100%;align-self:center;display:flex;flex-direction:column;gap:14px;height:54vh;overflow:hidden}
+  .bub{max-width:78%;padding:14px 18px;border-radius:16px;font-size:14.5px;line-height:1.7;opacity:0;transform:translateY(14px);transition:.5s}
+  .bub.show{opacity:1;transform:none}
+  .bub.u{align-self:flex-end;background:var(--panel2);border:1px solid rgba(255,255,255,.08);border-bottom-right-radius:5px}
+  .bub.a{align-self:flex-start;background:linear-gradient(180deg,#11243b,#0b1726);border:1px solid var(--line);border-bottom-left-radius:5px}
+  .bub .who{font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px;opacity:.8}
+  .bub.u .who{color:var(--cyan2)}.bub.a .who{color:var(--gold2)}
+  .bub b{color:var(--gold2);font-weight:600}
+
+  /* mcp orchestration */
+  .mcp{margin-top:18px;display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:18px;align-items:stretch;height:50vh}
+  .mcol{display:flex;flex-direction:column;gap:14px}
+  .mtool{background:#0a1524;border:1px solid var(--line);border-radius:14px;padding:18px 20px;opacity:.35;transition:.4s;position:relative}
+  .mtool.fire{opacity:1;border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyl),0 16px 40px -20px rgba(95,208,224,.5)}
+  .mtool .mh{display:flex;align-items:center;gap:10px;font-weight:650;font-size:15px}
+  .mtool .mh .pill{font-size:10px;background:var(--panel2);border:1px solid var(--cyl);color:var(--cyan2);border-radius:6px;padding:2px 7px}
+  .mtool ul{list-style:none;margin-top:10px}
+  .mtool li{font-size:12.5px;color:var(--muted);padding:3px 0 3px 16px;position:relative;opacity:0;transform:translateX(-6px);transition:.4s}
+  .mtool li::before{content:"▸";position:absolute;left:0;color:var(--cyan)}
+  .mtool.fire li{opacity:1;transform:none}
+  .mcenter{background:linear-gradient(180deg,#13243c,#0a1524);border:1px solid var(--line);border-radius:16px;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:24px}
+  .mcenter .core{width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle,rgba(201,163,94,.4),transparent 70%);font-size:34px;animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{50%{transform:scale(1.08)}}
+  .mcenter h3{font-size:17px;margin:14px 0 6px}.mcenter p{font-size:13px;color:var(--muted);line-height:1.6}
+  .mout{margin-top:14px;font-size:12.5px;color:var(--green);opacity:0;transition:.5s}.mout.show{opacity:1}
+  .marrow{position:absolute;top:50%;font-size:20px;color:var(--cyan);opacity:0;transition:.5s}.marrow.show{opacity:.7}
+
+  /* terminal demo (reuse) */
+  .demo{background:#070e1a;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 30px 60px -34px rgba(0,0,0,.8);margin-top:22px}
+  .demo-bar{display:flex;align-items:center;gap:8px;padding:11px 16px;background:#0b1726;border-bottom:1px solid rgba(255,255,255,.06)}
+  .dot{width:11px;height:11px;border-radius:50%}.dot.r{background:#e0655a}.dot.y{background:#e0b24a}.dot.g{background:#5fc08a}
+  .demo-title{margin-left:8px;color:var(--muted);font-size:12.5px}
+  .demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:40vh}
+  .demo-col{padding:18px 20px}.demo-col.input{border-right:1px solid rgba(255,255,255,.06)}
+  .col-tag{font-size:11px;letter-spacing:.16em;color:var(--gold);text-transform:uppercase;margin-bottom:12px}
+  .doc{font-size:12.5px;line-height:1.8;color:#c4d2e4;font-family:var(--mono);white-space:pre-wrap}
+  .out{font-size:13px;line-height:1.85;color:#dce6f2;min-height:28vh;white-space:pre-wrap}
+  .out .h{color:var(--gold2);font-weight:650}.out .risk{color:var(--red)}.out .ok{color:var(--green)}
+  .caret{display:inline-block;width:8px;height:16px;background:var(--gold);vertical-align:-3px;margin-left:1px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .hl{background:rgba(232,128,111,.16);border-bottom:1px solid var(--red);border-radius:2px;padding:0 2px}
+  .hl.g{background:rgba(95,192,138,.14);border-color:var(--green)}
+  .btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:var(--gold);color:#1a1205;border:none;border-radius:10px;
+    padding:10px 18px;font-weight:650;font-size:13.5px;font-family:var(--sans);transition:.15s}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 12px 24px -10px rgba(201,163,94,.6)}
+  .btn.cy{background:var(--cyan);box-shadow:none}.btn.cy:hover{box-shadow:0 12px 24px -10px rgba(95,208,224,.6)}
+  .demo-foot{padding:12px 20px;border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center}
+  .note{color:var(--dim);font-size:12px}
+
+  /* red lines / steps reuse */
+  .rl{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
+  .rl-card{background:linear-gradient(180deg,rgba(232,128,111,.08),transparent);border:1px solid rgba(232,128,111,.3);border-radius:14px;padding:20px 22px}
+  .rl-card.do{background:linear-gradient(180deg,rgba(95,192,138,.08),transparent);border-color:rgba(95,192,138,.3)}
+  .rl-card h3{font-size:16px;margin-bottom:12px}
+  .rl-card ul{list-style:none;color:var(--muted);font-size:13.5px;line-height:1.9}
+  .rl-card li{padding-left:16px;position:relative}.rl-card li::before{content:"·";position:absolute;left:3px;color:var(--gold);font-weight:800}
+  .steps{margin-top:24px;display:grid;gap:12px}
+  .step{display:flex;gap:16px;align-items:flex-start;background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:16px 20px}
+  .step .num{font-family:var(--serif);font-size:22px;color:var(--gold2);min-width:34px}
+  .step h3{font-size:15.5px;margin-bottom:3px}.step p{color:var(--muted);font-size:13px;line-height:1.55}
+
+  /* five roles compact */
+  .roles{grid-template-columns:repeat(5,1fr);gap:12px;margin-top:18px}
+  .roles .card{padding:14px 13px}
+  .roles .ico{font-size:19px;margin-bottom:7px}
+  .roles h3{font-size:14.5px;margin-bottom:5px}
+  .roles p{font-size:11.5px;line-height:1.55}
+  .roles .stat{font-size:11px;margin-top:8px}
+
+  /* agenda */
+  .agd{margin-top:26px;max-width:900px;width:100%}
+  .agd-row{display:flex;align-items:center;gap:16px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.06);
+    opacity:0;transform:translateX(-18px);transition:.5s}
+  .slide.active .agd-row{opacity:1;transform:none}
+  .slide.active .agd-row:nth-child(1){transition-delay:.05s}
+  .slide.active .agd-row:nth-child(2){transition-delay:.15s}
+  .slide.active .agd-row:nth-child(3){transition-delay:.25s}
+  .slide.active .agd-row:nth-child(4){transition-delay:.35s}
+  .slide.active .agd-row:nth-child(5){transition-delay:.45s}
+  .slide.active .agd-row:nth-child(6){transition-delay:.55s}
+  .slide.active .agd-row:nth-child(7){transition-delay:.65s}
+  .slide.active .agd-row:nth-child(8){transition-delay:.75s}
+  .agd-num{font-family:var(--serif);font-size:18px;color:var(--gold2);min-width:36px}
+  .agd-t{font-size:15px;font-weight:600;min-width:300px}
+  .agd-t small{display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:2px}
+  .agd-bar{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.07);overflow:hidden}
+  .agd-bar i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--cyan))}
+  .agd-min{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:42px;text-align:right}
+
+  /* code terminal */
+  .term{background:#070e1a;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 30px 60px -34px rgba(0,0,0,.8)}
+  .term-body{font-family:var(--mono);font-size:12px;line-height:1.85;padding:14px 16px;color:#c9d6e6;flex:1;overflow-y:auto;white-space:pre-wrap;min-height:0}
+  .term-body .cmdl{color:var(--cyan2)}
+  .term-body .ok3{color:var(--green)}.term-body .warn3{color:#e0b24a}.term-body .err3{color:var(--red)}
+  .term-body .dim3{color:var(--dim)}
+  .tline{opacity:0;transform:translateY(6px);transition:.35s;display:block}
+  .tline.in{opacity:1;transform:none}
+
+  /* mcp live log */
+  .mlog{font-family:var(--mono);font-size:11px;color:#9fc6d8;text-align:left;margin-top:12px;line-height:1.95;min-height:88px;width:100%}
+  .mlog .ml{display:block;opacity:0;transform:translateY(5px);transition:.35s}
+  .mlog .ml.in{opacity:1;transform:none}
+  .mlog .ret{color:var(--green)}
+
+  /* computer use demo */
+  .cu-desk{position:relative;background:linear-gradient(160deg,#15263d,#0a1524);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-height:48vh;box-shadow:0 30px 60px -34px rgba(0,0,0,.8)}
+  .cu-menubar{height:26px;background:#0b1726;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:8px;padding:0 12px;font-size:10.5px;color:var(--dim)}
+  .cu-win{position:absolute;left:6%;top:13%;width:88%;background:#0e1d31;border:1px solid rgba(255,255,255,.12);border-radius:12px;box-shadow:0 24px 50px -20px rgba(0,0,0,.7)}
+  .cu-winbar{display:flex;align-items:center;gap:7px;padding:9px 13px;border-bottom:1px solid rgba(255,255,255,.07);font-size:11.5px;color:var(--muted)}
+  .cu-form{padding:14px 18px;display:grid;gap:10px}
+  .cu-field label{font-size:10.5px;color:var(--dim);letter-spacing:.06em;display:block;margin-bottom:4px}
+  .cu-input{background:#091322;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 11px;font-size:12.5px;color:#dbe5f1;min-height:34px;transition:.3s}
+  .cu-input.focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(95,208,224,.15)}
+  .cu-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(95,192,138,.12);border:1px solid rgba(95,192,138,.4);border-radius:7px;padding:4px 10px;font-size:11.5px;color:var(--green);opacity:0;transition:.4s}
+  .cu-chip.in{opacity:1}
+  .cu-btn{justify-self:start;background:var(--gold);color:#1a1205;border-radius:8px;padding:8px 24px;font-size:12.5px;font-weight:700;transition:.3s}
+  .cu-btn.press{box-shadow:0 0 0 3px rgba(201,163,94,.35);transform:scale(.96)}
+  .cu-cursor{position:absolute;z-index:10;transition:all .9s cubic-bezier(.3,.7,.3,1);filter:drop-shadow(0 2px 6px rgba(0,0,0,.7))}
+  .cu-step{position:absolute;bottom:10px;left:14px;right:14px;font-size:11.5px;color:var(--cyan2);font-family:var(--mono)}
+
+  .closer{font-family:var(--serif);font-size:clamp(26px,3.6vw,46px);line-height:1.35;max-width:20ch}
+  .closer .em{background:linear-gradient(120deg,var(--gold2),var(--cyan2));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* chrome */
+  .progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--cyan));z-index:60;transition:width .45s}
+  .pageno{position:fixed;top:22px;right:34px;color:var(--dim);font-size:13px;z-index:50;letter-spacing:.1em}
+  .secname{position:fixed;top:22px;left:34px;color:var(--gold2);font-size:12.5px;z-index:50;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+  .nav{position:fixed;bottom:24px;right:32px;display:flex;gap:10px;z-index:50}
+  .nav button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:rgba(8,15,28,.7);color:var(--gold2);font-size:18px;cursor:pointer;backdrop-filter:blur(8px);transition:.2s}
+  .nav button:hover{background:var(--gold);color:#1a1205}
+  .dots{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:50;max-width:60vw;flex-wrap:wrap;justify-content:center}
+  .dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.16);cursor:pointer;transition:.2s}
+  .dots i.on{background:var(--gold);transform:scale(1.4)}
+  .hint{position:fixed;bottom:26px;left:32px;color:var(--dim);font-size:11.5px;z-index:40;opacity:.7}
+  kbd{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:11px;color:var(--gold2)}
+</style>
+</head>
+<body>
+<canvas id="bgfx"></canvas>
+<div class="progress" id="prog"></div>
+<div class="secname" id="secname">序章</div>
+<div class="pageno"><span id="pno">01</span> / <span id="ptot">16</span></div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 COVER -->
+  <section class="slide active" data-sec="序章">
+    <div class="reveal">
+      <div class="cover-mark">
+        <svg width="32" height="32" viewBox="0 0 24 24"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2z" fill="#c9a35e"/></svg>
+        <span style="letter-spacing:.2em;color:var(--gold2);font-weight:600">CLAUDE × 律 师</span>
+      </div>
+      <div class="kicker">合伙人内部分享 · <span class="seg">约 60 分钟</span></div>
+      <h1>当大模型走进<br>律师的<span class="gold">案头</span>与<span class="cyan">思维</span></h1>
+      <div class="hr"></div>
+      <p class="lead">这不是一场技术课。我们用信托诉讼与并购尽调两条模拟案例场景，看 Claude 如何成为你的<span class="gold">助理、合伙人、老师、对手与思考伙伴</span>。会用 AI 的律师，将重新定义这个行业。</p>
+    </div>
+    <div class="cover-foot">
+      <div><span class="badge">互动演示</span><span class="badge c">断网可放</span></div>
+      <div>大成上海 · 2026</div>
+    </div>
+  </section>
+
+  <!-- A 开宗明义 · 两大业务能做什么 -->
+  <section class="slide" data-sec="开宗明义">
+    <div class="reveal">
+      <div class="kicker">开宗明义 · <span class="seg">先说结论</span></div>
+      <h2>在<span class="cyan">争议解决</span>与<span class="gold">公司并购</span>两大战场，AI 已经能做这些</h2>
+      <div class="grid g2" style="margin-top:22px">
+        <div class="card" style="padding:24px;border-color:var(--cyl)">
+          <div class="ico">⚖️</div><h3 style="font-size:18px;color:var(--cyan2)">争议解决（信托诉讼）</h3>
+          <p style="font-size:13.5px;line-height:1.95;margin-top:8px">
+          · 海量卷宗/证据一次读完，抽事实、建时间线<br>
+          · 类案与裁判规则系统检索，评估责任比例区间<br>
+          · 答辩状/代理词/质证意见初稿，引用附出处<br>
+          · 争议焦点归纳、对方观点模拟、庭审发问预演<br>
+          · 证据缺口盘点与待核事项清单</p>
+          <div class="tag">后文全程以一起营业信托纠纷模拟案例演示</div>
+        </div>
+        <div class="card" style="padding:24px;border-color:var(--line)">
+          <div class="ico">🏢</div><h3 style="font-size:18px;color:var(--gold2)">公司并购</h3>
+          <p style="font-size:13.5px;line-height:1.95;margin-top:8px">
+          · 整个数据室材料一次纳入，抽取并交叉比对风险<br>
+          · 尽调问题清单、风险分级矩阵自动生成<br>
+          · SPA/合同逐条审查、缺失条款提示、修改建议<br>
+          · 交易架构与税务多方案比较<br>
+          · 目标公司股权穿透 + 司法风险核查（接企查查）</p>
+        </div>
+      </div>
+      <p class="note" style="margin-top:18px">共同点：凡是<span class="gold">"读得多、比得细、写初稿、查出处"</span>的活，AI 都能先替你做一遍。</p>
+    </div>
+  </section>
+
+  <!-- B 开宗明义 · 效率成本 + 解放合伙人 -->
+  <section class="slide" data-sec="开宗明义">
+    <div class="reveal">
+      <div class="kicker">开宗明义 · 时间与成本，重新分配</div>
+      <h2>把机械工时压缩，把合伙人的精力<span class="gold">释放到更值钱的地方</span></h2>
+      <div class="qq" style="margin-top:22px">
+        <div class="qbox bad" style="border-color:rgba(155,140,150,.35);background:linear-gradient(180deg,rgba(120,110,120,.08),transparent)">
+          <div class="ql" style="color:var(--dim)">过去 · 合伙人时间花在哪</div>
+          <div class="qt" style="font-size:13.5px;line-height:1.95;color:var(--muted)">
+          逐页读材料 · 机械比对模板 · 反复查法条<br>
+          调格式 · 写重复性初稿 · 夜里加班赶量<br>
+          <span style="color:var(--red)">→ 高资历的人，做着大量可标准化的活</span></div>
+          <div style="margin-top:14px;display:flex;gap:18px;flex-wrap:wrap">
+            <span class="note">合同审查 <b style="color:var(--ink)">3.5h</b></span>
+            <span class="note">尽调初筛 <b style="color:var(--ink)">数天</b></span>
+            <span class="note">类案检索 <b style="color:var(--ink)">半天</b></span>
+          </div>
+        </div>
+        <div class="qbox good">
+          <div class="ql">之后 · AI 先做一遍，合伙人专注</div>
+          <div class="qt" style="font-size:13.5px;line-height:1.95">
+          复杂判断与<b style="color:var(--gold2)">策略推演</b> · 谈判博弈<br>
+          疑难定性 · 商业风险权衡<br>
+          <b style="color:var(--gold2)">客户关系维护与新案开拓</b><br>
+          <span style="color:var(--green)">→ 把时间用在机器替不了、且最值钱的事上</span></div>
+          <div style="margin-top:14px;display:flex;gap:18px;flex-wrap:wrap">
+            <span class="note">合同审查 <b style="color:var(--green)">15min</b></span>
+            <span class="note">尽调初筛 <b style="color:var(--green)">数小时</b></span>
+            <span class="note">类案检索 <b style="color:var(--green)">分钟级</b></span>
+          </div>
+        </div>
+      </div>
+      <p class="lead" style="margin-top:18px;max-width:none">成本逻辑：<span class="gold">可标准化的初级工时被压缩，边际成本趋近于零</span>——同样的团队，能接更多案子、做更深的服务、留更多时间给客户。</p>
+    </div>
+  </section>
+
+  <!-- C 开宗明义 · AI 不能做的 -->
+  <section class="slide" data-sec="开宗明义">
+    <div class="reveal">
+      <div class="kicker">开宗明义 · 同样重要的边界</div>
+      <h2>这些事，<span style="color:var(--red)">AI 不替你做</span>——它是强大的助手，但它不是律师</h2>
+      <div class="rl" style="margin-top:22px">
+        <div class="rl-card do">
+          <h3><span style="color:var(--green)">✓</span> 交给 AI：把活做到 90%</h3>
+          <ul>
+            <li>读材料、抽要点、建时间线</li>
+            <li>标风险、列清单、出初稿</li>
+            <li>检索类案、起草文书、整理格式</li>
+            <li>多方案测算、跨文件交叉比对</li>
+          </ul>
+        </div>
+        <div class="rl-card">
+          <h3><span style="color:var(--red)">✕</span> 守在律师：最后 10% 的判断与责任</h3>
+          <ul>
+            <li>最终法律判断、署名意见与出庭——不可让渡</li>
+            <li>法条/案例引用必须人工复核（AI 会"一本正经地编"）</li>
+            <li>客户敏感信息须先脱敏，保密责任在律师</li>
+            <li>商业伦理、价值判断、客户信任——不可外包</li>
+            <li>"本地预核通过 ≠ 已核验"，不直接对外</li>
+          </ul>
+        </div>
+      </div>
+      <p class="note" style="margin-top:18px">记住这条分界线，就能<span class="gold">放心地用、负责任地用</span>。</p>
+    </div>
+  </section>
+
+  <!-- FIVE ROLES -->
+  <section class="slide" data-sec="五种角色">
+    <div class="reveal">
+      <div class="kicker">重新认识它</div>
+      <h2 style="font-size:clamp(22px,2.8vw,38px)">一个 AI，五种角色</h2>
+      <p class="lead" style="margin-top:6px;font-size:clamp(13px,1.2vw,16px)">别把它当搜索框。同一个 Claude，是哪种角色，取决于你怎么用它。</p>
+      <div class="grid roles">
+        <div class="card"><div class="ico">🗂</div><h3>助理</h3><p>把量大、重复的活先干完——批量审查、初稿、清单、台账。</p><div class="stat">Skills 与 Code</div></div>
+        <div class="card"><div class="ico">🤝</div><h3>合伙人</h3><p>并肩研判案件策略，给出独立的第二意见，敢于不同意你。</p><div class="stat">深度研究</div></div>
+        <div class="card"><div class="ico">📖</div><h3>老师</h3><p>随问随答、随答随讲，把每一次回答变成一次学习。</p><div class="stat">向 AI 学习</div></div>
+        <div class="card"><div class="ico">⚔️</div><h3>对手</h3><p>模拟对方律师的最强主张，预演庭审发问，专攻你的弱点。</p><div class="stat">对方观点模拟</div></div>
+        <div class="card"><div class="ico">💭</div><h3>思考伙伴</h3><p>来回追问、层层推进，把模糊的直觉变成清晰的结论。</p><div class="stat">并购尽调对话</div></div>
+      </div>
+      <p class="note" style="margin-top:16px">今天的每一个演示，都对应其中一种角色——看完你可以自己判断：<span class="gold">哪种角色最先进入你的工作。</span></p>
+    </div>
+  </section>
+
+  <!-- AGENDA -->
+  <section class="slide" data-sec="议程">
+    <div class="reveal">
+      <div class="kicker">今天的一小时</div>
+      <h2>七章 · 两条实务主线贯穿</h2>
+      <p class="lead" style="margin-top:8px"><span class="cyan">信托诉讼</span>与<span class="gold">并购尽调</span>两个模拟案例，所有演示围绕这两个案子展开。</p>
+    </div>
+    <div class="agd">
+      <div class="agd-row"><span class="agd-num">01</span><span class="agd-t">模型家族<small>四款模型，哪款配哪类业务</small></span><span class="agd-bar"><i style="width:80%"></i></span><span class="agd-min">8′</span></div>
+      <div class="agd-row"><span class="agd-num">02</span><span class="agd-t">Chat 三件利器<small>Project · Artifacts · Skills，三个拟真界面演示</small></span><span class="agd-bar"><i style="width:100%"></i></span><span class="agd-min">10′</span></div>
+      <div class="agd-row"><span class="agd-num">03</span><span class="agd-t">提问的艺术<small>五原则联动拆解，两个示例</small></span><span class="agd-bar"><i style="width:60%"></i></span><span class="agd-min">6′</span></div>
+      <div class="agd-row"><span class="agd-num">04</span><span class="agd-t">深度研究 · 信托诉讼模拟案例<small>一个问题拆成六路检索</small></span><span class="agd-bar"><i style="width:90%"></i></span><span class="agd-min">9′</span></div>
+      <div class="agd-row"><span class="agd-num">05</span><span class="agd-t">思考伙伴 · 并购尽调<small>不是一问一答，是来回推进</small></span><span class="agd-bar"><i style="width:90%"></i></span><span class="agd-min">9′</span></div>
+      <div class="agd-row"><span class="agd-num">06</span><span class="agd-t">Cowork 与 Code<small>法规核对工作流演示 + 六大入口 + Computer Use</small></span><span class="agd-bar"><i style="width:100%"></i></span><span class="agd-min">10′</span></div>
+      <div class="agd-row"><span class="agd-num">07</span><span class="agd-t">MCP · 北大法宝 + 企查查<small>给 AI 接上权威数据源</small></span><span class="agd-bar"><i style="width:70%"></i></span><span class="agd-min">7′</span></div>
+      <div class="agd-row"><span class="agd-num">✦</span><span class="agd-t">结语 · 向 AI 学习<small>+ Q&A</small></span><span class="agd-bar"><i style="width:30%"></i></span><span class="agd-min">3′</span></div>
+    </div>
+  </section>
+
+  <!-- 2 WHY NOW -->
+  <section class="slide" data-sec="序章">
+    <div class="reveal">
+      <div class="kicker">承上启下 · 为什么是现在</div>
+      <h2>开场篇的三个概念，对应三件已经发生的事</h2>
+      <div class="grid g3">
+        <div class="card"><div class="ico">📚</div><h3>模型能读完一整个案子</h3><p>整套数据室、整本招股书、上百页合同，一次性纳入，跨文件交叉分析。律师工作的"信息容量瓶颈"被打开。</p><div class="tag">概念对应 · 大模型</div></div>
+        <div class="card"><div class="ico">🔌</div><h3>能接上专业数据源</h3><p>通过 MCP 接入北大法宝、企查查等权威库，AI 不再"凭记忆编法条"，而是实时调取、附出处。</p><div class="tag">概念对应 · 概率机的解药</div></div>
+        <div class="card"><div class="ico">🤝</div><h3>能在你电脑上动手</h3><p>从"对话"到"协同操作"——批量处理文档、跨应用流程、本地数据核对，真正进入工作流。</p><div class="tag">概念对应 · Agent</div></div>
+      </div>
+      <p class="lead">结论先放这里：<span class="gold">AI 不会取代律师，但会用 AI 的律师，会取代不会用的律师。</span></p>
+    </div>
+  </section>
+
+  <!-- 3 DIVIDER I -->
+  <section class="slide divider" data-sec="模型家族">
+    <div class="reveal">
+      <div class="bignum">01</div>
+      <div class="kicker">第一章</div>
+      <h2>认识 Claude 的<span class="gold">模型家族</span><br>哪一个，配哪一类业务</h2>
+    </div>
+  </section>
+
+  <!-- 4 MODELS -->
+  <section class="slide" data-sec="模型家族">
+    <div class="reveal">
+      <div class="kicker">一套模型，分工不同</div>
+      <h2>四款模型，像四种资历的同事</h2>
+      <p class="lead" style="margin-top:10px">开场篇是横向选哪家；这里是纵向——同一家 Claude 内部，四款模型怎么分工。点击任一款，看它最适合的律师业务。</p>
+    </div>
+    <div class="models" id="models">
+      <div class="mcard" data-k="0"><div class="mt">Fable 5</div><div class="mid">claude-fable-5</div><div class="mrole">最新旗舰 · 综合最强</div><div class="mbar"></div></div>
+      <div class="mcard" data-k="1"><div class="mt">Opus 4.8</div><div class="mid">claude-opus-4-8</div><div class="mrole">深度推理 · 疑难复杂</div><div class="mbar"></div></div>
+      <div class="mcard" data-k="2"><div class="mt">Sonnet 4.6</div><div class="mid">claude-sonnet-4-6</div><div class="mrole">均衡主力 · 日常高频</div><div class="mbar"></div></div>
+      <div class="mcard" data-k="3"><div class="mt">Haiku 4.5</div><div class="mid">claude-haiku-4-5</div><div class="mrole">极速轻量 · 即时响应</div><div class="mbar"></div></div>
+    </div>
+    <div class="mdetail" id="mdetail">
+      <h3>点击上方任一模型</h3>
+      <p>把模型想成不同资历的同事：疑难大案找"资深合伙人"，高频常规找"得力主办律师"，海量初筛找"高效实习生"。选对模型，又快又省。</p>
+    </div>
+  </section>
+
+  <!-- 5 DIVIDER II -->
+  <section class="slide divider" data-sec="Chat 核心功能">
+    <div class="reveal">
+      <div class="bignum">02</div>
+      <div class="kicker">第二章</div>
+      <h2>Chat 里的三件利器<br><span class="gold">Project · Artifacts · Skills</span></h2>
+    </div>
+  </section>
+
+  <!-- 6 CHAT FEATURES TABS -->
+  <section class="slide" data-sec="Chat 核心功能">
+    <div class="reveal">
+      <div class="kicker">不只是聊天框</div>
+      <h2>同一个对话框，三种工作方式</h2>
+    </div>
+    <div class="tabs" id="tabs">
+      <div class="tab on" data-k="0">📁 Project 项目</div>
+      <div class="tab" data-k="1">📦 Artifacts 可交付物</div>
+      <div class="tab" data-k="2">🧩 Skills 技能</div>
+    </div>
+    <div class="tabbody" id="tabbody"></div>
+  </section>
+
+  <!-- 7 DIVIDER III -->
+  <section class="slide divider" data-sec="提问的艺术">
+    <div class="reveal">
+      <div class="bignum">03</div>
+      <div class="kicker">第三章</div>
+      <h2>怎么提问，<span class="gold">才是好问题</span></h2>
+    </div>
+  </section>
+
+  <!-- 8 GOOD QUESTION -->
+  <section class="slide" data-sec="提问的艺术">
+    <div class="reveal">
+      <div class="kicker">输入决定输出</div>
+      <h2>同一个需求，两种提问，两个世界</h2>
+      <div class="qtoggle" id="qToggle">
+        <button class="on" data-k="0">示例一 · 并购合同审查</button>
+        <button data-k="1">示例二 · 信托诉讼类案检索</button>
+      </div>
+      <div class="qq" id="qq" style="margin-top:16px"></div>
+      <div class="qprin" id="qprin">
+        <span data-p="0">① 给角色</span><span data-p="1">② 给背景</span><span data-p="2">③ 给标准</span><span data-p="3">④ 给输出格式</span><span data-p="4">⑤ 给约束</span>
+      </div>
+      <p class="note" style="margin-top:12px">把鼠标移到任一原则上，好提问中对应的句子会同步亮起；摸句子也会点亮它属于哪条原则 ↔</p>
+      <p class="note" style="margin-top:6px">原理回看开场篇：你输入的每一个字，都在收窄它的概率分布——<span class="gold">五原则，就是五把锁定概率的钳子。</span></p>
+    </div>
+  </section>
+
+  <!-- 9 DIVIDER IV -->
+  <section class="slide divider" data-sec="深度研究 · 信托诉讼">
+    <div class="reveal">
+      <div class="bignum">04</div>
+      <div class="kicker">第四章 · 场景一 · 模拟案例</div>
+      <h2>深度研究<br><span class="cyan">信托诉讼</span> 模拟演示</h2>
+    </div>
+  </section>
+
+  <!-- 10 DEEP RESEARCH -->
+  <section class="slide" data-sec="深度研究 · 信托诉讼">
+    <div class="reveal">
+      <div class="kicker">场景 · 营业信托纠纷 <span class="seg">泰和信托案（模拟案例）</span></div>
+      <h2 style="font-size:clamp(20px,2.5vw,32px)">"我方代理受托人泰和信托：金梭纺织认购 2000 万集合信托，底层地产债券违约，被诉返还本息约 2363 万。围绕<span class="cyan">受托人责任与比例归责</span>，系统检索裁判规则，评估抗辩空间。"</h2>
+    </div>
+    <div class="research" id="research">
+      <svg viewBox="0 0 1000 460" id="rsvg" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="rstep" id="rstep"></div>
+    </div>
+    <div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center">
+      <span class="note">💡 拟真演示：Claude 把一个大问题拆成多路检索 → 逐条核验 → 综合成带出处的研究报告</span>
+      <button class="btn cy" id="runRes">▶ 启动深度研究</button>
+    </div>
+  </section>
+
+  <!-- 11 DIVIDER V -->
+  <section class="slide divider" data-sec="思考伙伴 · 并购尽调">
+    <div class="reveal">
+      <div class="bignum">05</div>
+      <div class="kicker">第五章 · 场景二</div>
+      <h2>让 AI 成为你的<span class="gold">思考伙伴</span><br><span class="cyan">并购尽调</span> 模拟场景</h2>
+    </div>
+  </section>
+
+  <!-- 12 THINKING PARTNER -->
+  <section class="slide" data-sec="思考伙伴 · 并购尽调">
+    <div class="reveal" style="margin-bottom:6px">
+      <div class="kicker">场景 · 尽调发现一笔可疑关联交易</div>
+      <h2 style="font-size:clamp(20px,2.6vw,32px)">不是一问一答，是<span class="gold">来回推进的思考</span></h2>
+    </div>
+    <div class="chat" id="chat"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+      <span class="note">💡 律师抛事实 → AI 给定性与风险 → 律师追问 → AI 给举证思路与下一步清单</span>
+      <button class="btn" id="runChat">▶ 播放对话</button>
+    </div>
+  </section>
+
+  <!-- 13 COWORK & CODE -->
+  <section class="slide" data-sec="Cowork & Code">
+    <div class="reveal">
+      <div class="kicker">第六章 · 从对话到动手</div>
+      <h2>Cowork 与 Code：让 AI 真正"上手干活"</h2>
+      <p class="note" style="margin-top:6px">开场篇的公式——大模型 + 工具 + 记忆 + 目标循环 = Agent。<span class="gold">右边这个终端里干活的，就是一个 Agent。</span></p>
+      <div style="display:grid;grid-template-columns:.85fr 1.15fr;gap:18px;margin-top:22px;align-items:stretch">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card" style="padding:18px 20px;flex:1">
+            <h3 style="font-size:17px">💻 Claude Code</h3>
+            <p style="font-size:12.5px;margin:8px 0 10px;color:var(--muted)">在你电脑上直接动手：读写文件、批量处理、运行程序、调用本地工具。管<span class="gold">"文件与批量"</span>。</p>
+            <p style="font-size:12.5px;color:var(--muted)">· 批量脱敏几百份卷宗（本所脱敏工具）<br>· 几十份合同同类条款批量核对<br>· 本地法规库同步与引用批量核对 →</p>
+          </div>
+          <div class="card" style="padding:18px 20px;flex:1">
+            <h3 style="font-size:17px">🖱️ Cowork 协同操作</h3>
+            <p style="font-size:12.5px;margin:8px 0 10px;color:var(--muted)">在桌面与浏览器里实际操作应用，完成跨应用多步流程。管<span class="gold">"应用与流程"</span>。</p>
+            <p style="font-size:12.5px;color:var(--muted)">· 从 PDF 批量填写制式表格<br>· 整理归类往来邮件与附件<br>· 把网页 / 系统资料汇成台账</p>
+          </div>
+        </div>
+        <div class="term">
+          <div class="demo-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="demo-title">Claude Code · 答辩状引用批量核对（模拟演示）</span></div>
+          <div class="term-body" id="termOut"><span style="color:var(--dim)">点「运行」：用本所本地法规库核对泰和信托案答辩状的全部引用 →</span></div>
+          <div class="demo-foot"><span class="note">💡 对应本所已部署的「法规调用程序」与北大法宝复核队列</span><button class="btn" id="termRun">▶ 运行</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENTRY POINTS -->
+  <section class="slide" data-sec="入口与形态">
+    <div class="reveal">
+      <div class="kicker">第六章 · 入口与形态</div>
+      <h2>Claude 不只在一个窗口里——六个入口，覆盖律师的一天</h2>
+      <div class="grid g3" style="margin-top:24px">
+        <div class="card"><div class="ico">🌐</div><h3>网页版 claude.ai</h3><p>Project / Artifacts / Skills 的主战场，任何浏览器打开即用。</p><div class="tag">日常研究与起草</div></div>
+        <div class="card"><div class="ico">🖥️</div><h3>桌面版（Mac / Win）</h3><p>能读本地文件夹、接本地工具与 MCP，是 Cowork 协同操作的载体。</p><div class="tag">卷宗在哪，它在哪</div></div>
+        <div class="card"><div class="ico">📱</div><h3>手机 App</h3><p>语音提问、拍照识文档，案件 Project 同步可问。</p><div class="tag">庭间休息查一条</div></div>
+        <div class="card"><div class="ico">📄</div><h3>Office 内嵌</h3><p>在 Word / Excel / PPT 里直接改写润色、整理表格、生成大纲——不用复制粘贴来回倒。</p><div class="tag">意见书在 Word 里直接改</div></div>
+        <div class="card"><div class="ico">🧭</div><h3>浏览器内（Chrome 扩展）</h3><p>读当前网页、长判决书页面边读边问、协助网页表单。</p><div class="tag">裁判文书页边读边问</div></div>
+        <div class="card"><div class="ico">🔌</div><h3>API / SDK 嵌入网站</h3><p>把 Claude 嵌进律所官网、内部知识库、客户门户，做智能问答与初筛。</p><div class="tag">本所知识库智能化</div></div>
+      </div>
+      <p class="note" style="margin-top:18px">同一个账号能力互通：<span class="gold">Project 里建好的泰和信托案知识库，手机上也能直接问。</span></p>
+    </div>
+  </section>
+
+  <!-- COMPUTER USE -->
+  <section class="slide" data-sec="入口与形态">
+    <div class="reveal" style="margin-bottom:4px">
+      <div class="kicker">第六章 · Computer Use 计算机操作</div>
+      <h2 style="font-size:clamp(20px,2.6vw,32px)">它能像人一样"看屏幕、动鼠标"——任何软件，不需要接口</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:.85fr 1.15fr;gap:18px;margin-top:14px;align-items:stretch">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card" style="padding:16px 20px">
+          <h3 style="font-size:15.5px">它是什么</h3>
+          <p style="font-size:12.5px;margin-top:6px">Claude 截屏"看懂"界面 → 自己移动鼠标、点击、键入。<span class="gold">软件不提供任何接口也能操作。</span></p>
+        </div>
+        <div class="card" style="padding:16px 20px">
+          <h3 style="font-size:15.5px">律师场景</h3>
+          <p style="font-size:12.5px;margin-top:6px;color:var(--muted)">· 法院网上立案 / 电子送达平台批量操作<br>· 没有接口的内部 OA、案管系统录入<br>· 从 Excel 台账逐条录入业务系统</p>
+        </div>
+        <div class="card" style="padding:16px 20px;border-color:rgba(232,128,111,.35)">
+          <h3 style="font-size:15.5px;color:var(--red)">边界</h3>
+          <p style="font-size:12.5px;margin-top:6px;color:var(--muted)">全程屏幕可见、可随时接管；按应用分级授权；<span style="color:var(--gold2)">提交、付款类动作留给律师点。</span></p>
+        </div>
+      </div>
+      <div class="cu-desk" id="cuDesk">
+        <div class="cu-menubar">⬤ 桌面 · 模拟演示（断网可放）</div>
+        <div class="cu-win">
+          <div class="cu-winbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span style="margin-left:6px">某法院 · 网上立案系统（模拟界面）</span></div>
+          <div class="cu-form">
+            <div class="cu-field"><label>当事人名称</label><div class="cu-input" id="cuF1"></div></div>
+            <div class="cu-field"><label>案由</label><div class="cu-input" id="cuF2"></div></div>
+            <div class="cu-field"><label>材料上传</label><div class="cu-input" id="cuF3" style="display:flex;align-items:center"><span class="cu-chip" id="cuChip">📎 答辩状（已审定版）.pdf ✓</span></div></div>
+            <div class="cu-btn" id="cuBtn">提交核对</div>
+          </div>
+        </div>
+        <div class="cu-cursor" id="cuCursor" style="left:82%;top:8%">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 3l14 9-6.5 1.2L16 20l-3 1.4-3.4-6.8L5 19V3z" fill="#fff" stroke="#1a1205" stroke-width="1.2"/></svg>
+        </div>
+        <div class="cu-step" id="cuStep">点右下「演示」：看 Claude 如何操作一个没有接口的系统 →</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px">
+      <button class="btn cy" id="cuRun">▶ 演示：网上立案填报</button>
+    </div>
+  </section>
+
+  <!-- 14 DIVIDER VI -->
+  <section class="slide divider" data-sec="MCP · 专业数据源">
+    <div class="reveal">
+      <div class="bignum">07</div>
+      <div class="kicker">第七章 · 接上权威数据</div>
+      <h2>MCP：给 AI 装上<br><span class="cyan">北大法宝</span> 与 <span class="gold">企查查</span> 的"插座"</h2>
+    </div>
+  </section>
+
+  <!-- 15 MCP ORCHESTRATION -->
+  <section class="slide" data-sec="MCP · 专业数据源">
+    <div class="reveal" style="margin-bottom:4px">
+      <div class="kicker">联合编排 · 泰和信托案庭前准备</div>
+      <h2 style="font-size:clamp(20px,2.6vw,32px)">"开庭在即：查清底层债务人的资产与执行线索，核验答辩状引用的法条与类案。"</h2>
+    </div>
+    <div class="mcp" id="mcp">
+      <div class="mcol">
+        <div class="mtool" data-t="0">
+          <div class="mh">🏢 企查查 MCP <span class="pill">企业数据</span></div>
+          <ul><li>股权穿透 · 实际控制人</li><li>受益所有人 · 董监高关联</li><li>司法风险 · 行政处罚</li><li>招投标 · 知识产权</li></ul>
+        </div>
+        <div class="marrow" id="arrowL" style="right:-13px">→</div>
+      </div>
+      <div class="mcenter">
+        <div class="core">✦</div>
+        <h3>Claude 编排</h3>
+        <p>拆解任务 → 并行调取两个数据源 → 交叉核验 → 汇总成可溯源的庭前备忘录</p>
+        <div class="mlog" id="mlog"></div>
+        <div class="mout" id="mout">✓ 已生成庭前备忘录：执行线索 4 条 · 法条核验 7 条，全部附出处</div>
+      </div>
+      <div class="mcol">
+        <div class="mtool" data-t="1">
+          <div class="mh">⚖️ 北大法宝 MCP <span class="pill">法律数据</span></div>
+          <ul><li>法条识别 · 条文原文检索</li><li>案例检索 · 案号识别</li><li>类案语义检索</li><li>引用即时附出处</li></ul>
+        </div>
+        <div class="marrow" id="arrowR" style="left:-13px">←</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+      <span class="note">💡 这正是你们已接入的能力：天眼查/企查查 + 北大法宝 MCP，Claude 实时调取、附出处</span>
+      <button class="btn cy" id="runMcp">▶ 演示联合调取</button>
+    </div>
+  </section>
+
+  <!-- 16 LEARN FROM AI + CLOSER -->
+  <section class="slide" data-sec="结语">
+    <div class="reveal">
+      <div class="kicker">用 AI 最好的方法</div>
+      <h2 style="margin-bottom:18px">向 AI 学习</h2>
+      <div class="grid g3" style="margin-top:6px">
+        <div class="card"><div class="ico">🔁</div><h3>让它解释自己</h3><p>"你为什么这么分析？还有别的角度吗？"——把每次回答当成一次复盘。</p></div>
+        <div class="card"><div class="ico">🎯</div><h3>让它教你提问</h3><p>"这个问题怎么问会更好？"——AI 会把你的模糊需求改写成精确指令。</p></div>
+        <div class="card"><div class="ico">💡</div><h3>让它补你的盲区</h3><p>"我可能漏了哪些风险点？"——它常能指出你没想到的分析维度。</p></div>
+      </div>
+      <div class="hr" style="margin:30px 0 22px"></div>
+      <div class="closer">不是 AI 取代律师，<br>而是<span class="em">会用 AI 的律师</span>，<br>取代不会用的律师。</div>
+      <p class="lead" style="margin-top:18px">今天的目标只有一个：让你有兴趣<span class="gold">明天就打开它，问出第一个好问题。</span></p>
+    </div>
+    <div class="cover-foot"><div><span class="badge c">向 AI 学习</span></div><div>谢谢 · Q & A</div></div>
+  </section>
+
+</div>
+
+<div class="dots" id="dots"></div>
+<div class="nav"><button id="prev">‹</button><button id="next">›</button></div>
+<div class="hint">用 <kbd>←</kbd> <kbd>→</kbd> 翻页 · <kbd>F</kbd> 全屏 · <kbd>A</kbd> 自动巡演</div>
+<div class="autobadge" id="autoBadge"><span class="spin">⟳</span> 自动巡演中 · 按 <kbd>A</kbd> 或翻页键退出</div>
+
+<script>
+/* ===== particle background ===== */
+(function(){
+  const c=document.getElementById('bgfx'),x=c.getContext('2d');
+  let w,h,pts=[];
+  function rs(){w=c.width=innerWidth;h=c.height=innerHeight;
+    pts=Array.from({length:Math.min(70,Math.floor(w*h/26000))},()=>({
+      x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.6+.4}));}
+  rs();addEventListener('resize',rs);
+  (function loop(){
+    x.clearRect(0,0,w,h);
+    for(const p of pts){p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;
+      x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fillStyle='rgba(201,163,94,.45)';x.fill();}
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const a=pts[i],b=pts[j],d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(d<120){x.beginPath();x.moveTo(a.x,a.y);x.lineTo(b.x,b.y);
+        x.strokeStyle='rgba(95,208,224,'+(.10*(1-d/120))+')';x.stroke();}}
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ===== deck nav ===== */
+const slides=[...document.querySelectorAll('.slide')];let cur=0;const N=slides.length;
+document.getElementById('ptot').textContent=String(N).padStart(2,'0');
+const dots=document.getElementById('dots');
+slides.forEach((_,i)=>{const d=document.createElement('i');if(!i)d.classList.add('on');d.onclick=()=>go(i);dots.appendChild(d);});
+const dotEls=[...dots.children];
+function go(i){
+  i=Math.max(0,Math.min(N-1,i));
+  slides[cur].classList.remove('active');dotEls[cur].classList.remove('on');
+  cur=i;slides[cur].classList.add('active');dotEls[cur].classList.add('on');
+  document.getElementById('prog').style.width=((i+1)/N*100)+'%';
+  document.getElementById('pno').textContent=String(i+1).padStart(2,'0');
+  document.getElementById('secname').textContent=slides[i].dataset.sec||'';
+  onEnter(i);
+}
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('prev').onclick=()=>go(cur-1);
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ')go(cur+1);
+  else if(e.key==='ArrowLeft')go(cur-1);
+  else if(e.key.toLowerCase()==='f'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+});
+document.getElementById('prog').style.width=(1/N*100)+'%';
+
+/* ===== models ===== */
+const M=[
+ {h:'Fable 5 — 最新旗舰，综合最强',p:'当前最强综合能力，用于最高难度、最高风险的工作。复杂推理、长链条论证、跨领域整合一气呵成。把它留给真正的"硬骨头"。',u:['重大疑难法律意见','复杂跨境交易架构','首席律师级策略推演']},
+ {h:'Opus 4.8 — 深度推理，疑难复杂',p:'擅长长链条逻辑推理与多文件深度交叉分析，在复杂、需要严谨论证的法律问题上表现稳定。',u:['复杂争议解决策略','疑难合规论证','多文件深度交叉分析']},
+ {h:'Sonnet 4.6 — 均衡主力，日常高频',p:'速度与能力的最佳平衡，是日常高频工作的性价比之选。绝大多数常规法律工作交给它即可。',u:['日常合同审查','尽调材料处理','文书起草与批量化常规工作']},
+ {h:'Haiku 4.5 — 极速轻量，即时响应',p:'极快、轻量，适合即时、海量、低复杂度的任务。把它当成不知疲倦的高效实习生。',u:['即时翻译与长文摘要','文件分类与检索初筛','海量文档第一遍粗筛']}
+];
+(function(){
+  const cards=[...document.querySelectorAll('#models .mcard')],det=document.getElementById('mdetail');
+  cards.forEach(c=>c.onclick=()=>{
+    cards.forEach(x=>x.classList.remove('on'));c.classList.add('on');
+    const m=M[+c.dataset.k];det.classList.remove('show');
+    setTimeout(()=>{det.innerHTML='<h3>'+m.h+'</h3><p>'+m.p+'</p><div class="use">'+m.u.map(u=>'<span>'+u+'</span>').join('')+'</div>';det.classList.add('show');},120);
+  });
+})();
+
+/* ===== chat-feature tabs（三个标签均为拟真界面演示）===== */
+const PJ_FILES=[
+ {ic:'📄',n:'股权转让协议（SPA）草案 v3.docx',s:'1.2 MB'},
+ {ic:'📊',n:'数据室索引及尽调底稿.xlsx',s:'860 KB'},
+ {ic:'📄',n:'目标公司章程（2024 修订）.pdf',s:'2.4 MB'},
+ {ic:'📄',n:'尽调报告初稿 · 法律部分.docx',s:'3.1 MB'},
+ {ic:'📄',n:'客户邮件 · 商业关切要点.pdf',s:'320 KB'}
+];
+const PJ_INSTR='你是本所并购团队的协作助手。本项目为“兴荣股权收购”。\n· 所有分析以项目知识库内文件为准，引用须注明文件名与条款号\n· 风险按 高/中/低 分级；客户敏感信息一律用代称\n· 输出格式遵循本所备忘录模板';
+let pjTimers=[];
+function pjClear(){pjTimers.forEach(t=>clearTimeout(t));pjTimers=[];}
+function pjT(fn,ms){pjTimers.push(setTimeout(fn,ms));}
+(function(){
+  const tabs=[...document.querySelectorAll('#tabs .tab')],body=document.getElementById('tabbody');
+  function renderProject(){
+    body.style.gridTemplateColumns='1fr';
+    body.innerHTML=
+    `<div class="pj">
+      <div class="pj-head">
+        <div class="pico">📁</div>
+        <div><div class="pt">兴荣股权收购 · Project</div><div class="ps">并购团队 · 6 名成员共享</div></div>
+        <span class="pbadge">同一案件记忆 · 持续上下文</span>
+      </div>
+      <div class="pj-main">
+        <div class="pj-side">
+          <div class="pj-sec">项目指令 Project Instructions</div>
+          <div class="pj-instr" id="pjInstr"><span style="color:var(--dim)">（点击右下「演示」写入）</span></div>
+          <div class="pj-sec" style="margin-top:14px">项目知识库 Knowledge <span id="pjCnt" style="color:var(--cyan2)"></span></div>
+          <div id="pjFiles"></div>
+        </div>
+        <div class="pj-chat" id="pjChat">
+          <div style="margin:auto;text-align:center;color:var(--dim);font-size:13px" id="pjHint">
+            ↑ 把整个案子的材料放进左侧知识库<br>之后团队任何人提问，Claude 都基于全部材料回答</div>
+        </div>
+      </div>
+      <div class="pj-foot">
+        <span class="note">💡 拟真界面演示 · 真实 Project 在 claude.ai 中即是此结构</span>
+        <button class="btn" id="pjRun">▶ 演示：建库 → 提问</button>
+      </div>
+    </div>`;
+    document.getElementById('pjRun').onclick=runPj;
+  }
+  function runPj(){
+    pjClear();
+    const fbox=document.getElementById('pjFiles'),instr=document.getElementById('pjInstr'),
+          chat=document.getElementById('pjChat'),cnt=document.getElementById('pjCnt');
+    fbox.innerHTML='';instr.innerHTML='';chat.innerHTML='';
+    /* 1. 文件逐个飞入 */
+    PJ_FILES.forEach((f,i)=>{
+      const el=document.createElement('div');el.className='pj-file';
+      el.innerHTML='<span class="fic">'+f.ic+'</span><span class="fn">'+f.n+'</span><span class="fs">'+f.s+'</span><span class="ok2">✓</span>';
+      fbox.appendChild(el);
+      pjT(()=>{el.classList.add('in');cnt.textContent='('+(i+1)+' 份)';},350+i*420);
+    });
+    /* 2. 项目指令打字写入 */
+    pjT(()=>{
+      let i=0;const tick=setInterval(()=>{
+        i+=2;instr.textContent=PJ_INSTR.slice(0,i);
+        if(i>=PJ_INSTR.length){clearInterval(tick);instr.textContent=PJ_INSTR;}
+      },24);pjTimers.push(tick);
+    },2600);
+    /* 3. 团队成员提问 */
+    pjT(()=>{
+      const u=document.createElement('div');u.className='pj-bub u';
+      u.innerHTML='<div class="who2">团队成员 · 王律师</div>SPA 里第 5.2 条的对赌回购安排，和目标公司章程的表决程序有没有冲突？尽调底稿里有没有相关发现？';
+      chat.appendChild(u);requestAnimationFrame(()=>u.classList.add('show'));
+    },6400);
+    /* 4. Claude 跨文件回答 */
+    pjT(()=>{
+      const a=document.createElement('div');a.className='pj-bub a';
+      a.innerHTML='<div class="who2">Claude · 基于项目知识库 5 份文件</div>'
+        +'存在<b>一处高风险冲突</b>：SPA 第 5.2 条约定对赌触发后由<b>目标公司回购</b>股权，'
+        +'但章程第 34 条规定公司回购须经<b>股东会三分之二特别决议</b>，且创始股东目前持股足以否决——'
+        +'回购义务可能<b>无法实际履行</b>。尽调底稿 D-17 也记录了创始股东曾在 2024 年股东会上反对类似议案。'
+        +'建议：将回购义务人调整为<b>转让方股东本人</b>，或在交割先决条件中加入章程修订。<br>'
+        +'<span class="cite">📄 SPA 草案 v3 · 第5.2条</span><span class="cite">📄 公司章程 · 第34条</span><span class="cite">📊 尽调底稿 · D-17</span>';
+      chat.appendChild(a);requestAnimationFrame(()=>a.classList.add('show'));
+      chat.scrollTop=chat.scrollHeight;
+    },7600);
+  }
+  /* ---- Artifacts 拟真演示 ---- */
+  function renderArtifacts(){
+    body.style.gridTemplateColumns='1fr';
+    body.innerHTML=
+    `<div class="pj">
+      <div class="pj-head">
+        <div class="pico">📦</div>
+        <div><div class="pt">兴荣股权收购 · 对话</div><div class="ps">Artifacts：成果以独立"工件"呈现，可下载、可迭代</div></div>
+        <span class="pbadge">不淹没在聊天记录里</span>
+      </div>
+      <div class="af-main">
+        <div class="pj-chat" id="afChat">
+          <div style="margin:auto;text-align:center;color:var(--dim);font-size:13px">
+            提出需求 → 右侧滑出一份成型的可交付物</div>
+        </div>
+        <div class="af-panel" id="afPanel">
+          <div class="af-bar">
+            <span>📊</span><span class="at">尽调风险分级矩阵 · Artifact</span>
+            <div class="af-act"><span>⬇ 下载</span><span>⧉ 复制</span><span>↻ 迭代</span></div>
+          </div>
+          <div class="af-body">
+            <table class="afm">
+              <thead><tr><th>维度</th><th>发现</th><th>分级</th><th>处理建议</th></tr></thead>
+              <tbody id="afRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="pj-foot">
+        <span class="note">💡 拟真界面演示 · 表格/文书/时间线/小工具均可作为 Artifact 生成</span>
+        <button class="btn" id="afRun">▶ 演示：生成风险矩阵</button>
+      </div>
+    </div>`;
+    document.getElementById('afRun').onclick=runAf;
+  }
+  const AF_ROWS=[
+    ['监管','目标公司未取得增值电信业务许可即开展相关经营','r','高','整改完成作为交割先决条件'],
+    ['治理','SPA 对赌回购安排与章程第 34 条特别决议门槛冲突','r','高','回购义务人调整为转让方股东'],
+    ['合同','3 份核心客户合同含"控制权变更"终止条款','y','中','交割前取得客户书面同意函'],
+    ['资产','核心房产已设抵押，登记信息与账面记载不符','y','中','补充权属核查 + 价格调整机制'],
+    ['监管','历史社保公积金缴纳基数不足','g','低','卖方承诺 + 专项赔偿条款覆盖']
+  ];
+  function runAf(){
+    pjClear();
+    const chat=document.getElementById('afChat'),panel=document.getElementById('afPanel'),rows=document.getElementById('afRows');
+    chat.innerHTML='';rows.innerHTML='';panel.classList.remove('in');
+    pjT(()=>{
+      const u=document.createElement('div');u.className='pj-bub u';
+      u.innerHTML='<div class="who2">承办律师</div>把目前的尽调发现整理成一份风险分级矩阵，按 监管 / 治理 / 合同 / 资产 四个维度，红黄绿分级，附处理建议。';
+      chat.appendChild(u);requestAnimationFrame(()=>u.classList.add('show'));
+    },300);
+    pjT(()=>{
+      const a=document.createElement('div');a.className='pj-bub a';
+      a.innerHTML='<div class="who2">Claude</div>已生成<b>《尽调风险分级矩阵》</b>，见右侧 Artifact——可直接下载交付，也可以继续说"把高风险项加上责任人"让我迭代。';
+      chat.appendChild(a);requestAnimationFrame(()=>a.classList.add('show'));
+    },1500);
+    pjT(()=>panel.classList.add('in'),2400);
+    AF_ROWS.forEach((r,i)=>{
+      pjT(()=>{
+        const tr=document.createElement('tr');tr.className='row';
+        tr.innerHTML='<td>'+r[0]+'</td><td>'+r[1]+'</td><td><span class="lvl '+r[2]+'">'+r[3]+'</span></td><td>'+r[4]+'</td>';
+        rows.appendChild(tr);requestAnimationFrame(()=>tr.classList.add('in'));
+      },3100+i*380);
+    });
+  }
+
+  /* ---- Skills 拟真演示（使用本所 86 个真实技能）---- */
+  const SK_LIB=[
+    {n:'litigation-legal:chronology',d:'案件事实时间轴（含民诉法关键期限标签）',ic:'⏱'},
+    {n:'litigation-legal:claim-chart',d:'争点对照表',ic:'⚖️'},
+    {n:'litigation-legal:demand-draft',d:'律师函起草',ic:'✉️'},
+    {n:'litigation-legal:witness-interview-prep',d:'证人访谈准备',ic:'🗣'},
+    {n:'corporate-legal:diligence-issue-extraction',d:'尽调问题提取（公司法 2023 修订检查点）',ic:'🔍'},
+    {n:'corporate-legal:closing-checklist',d:'交割清单',ic:'✅'},
+    {n:'corporate-legal:tabular-review',d:'表格化审查',ic:'📋'}
+  ];
+  /* 每个技能一套同步演示：cmd 命令 + title 输出标题 + lines 逐行输出（HTML） */
+  const SK_DEMOS=[
+    {cmd:'/chronology 泰和信托案 --from=2020-12',
+     title:'⏱ 案件事实时间轴 · 泰和信托案（模拟案例 · 含时效与披露节点标签）',
+     lines:[
+      '<span class="tld">2020-12-15</span><span class="tlt">泰和·汇泽 3 号集合资金信托计划成立</span>',
+      '<span class="tld">2021-04-01</span><span class="tlt">金梭纺织认购第 6 期信托单位 2000 万元<span class="tl-tag">确认单 04-07 · 原件待核</span></span>',
+      '<span class="tld">2022-07-04</span><span class="tlt">受托人发布临时信息披露公告<span class="tl-tag warn">公告原件待核 · 关键证据</span></span>',
+      '<span class="tld">2022-07-20</span><span class="tlt">底层债务人未按期偿付当期利息<span class="tl-tag warn">风险暴露 · 时效起算点候选</span></span>',
+      '<span class="tld">2022-07-26</span><span class="tlt">当期仅部分分配（约预期收益 30%）</span>',
+      '<span class="tld">2023-11-02</span><span class="tlt">底层资产诉讼取得一审判决<span class="tl-tag">持续管理证据</span></span>',
+      '<span class="tld">2024-02</span><span class="tlt">底层债权进入强制执行程序<span class="tl-tag">持续管理证据</span></span>',
+      '<span class="tld">2025</span><span class="tlt">本案开庭传票送达<span class="tl-tag">起诉日待核 · 时效抗辩窗口核查</span></span>']},
+    {cmd:'/claim-chart 泰和信托案',
+     title:'⚖️ 争点对照表 · 泰和信托案（我方：受托人）',
+     lines:[
+      '<span class="tlt"><b style="color:var(--gold2)">争点一 · 受托人是否违反受托管理义务（信托法 25 条）</b></span>',
+      '<span class="tld">原告主张</span><span class="tlt">资金用途偏离约定；管理报告"运行基本正常"与实际风险矛盾<span class="tl-tag warn">2022-07-04 公告原件待补</span></span>',
+      '<span class="tld">我方抗辩</span><span class="tlt">公告→催收→诉讼→执行证据链完整；底层系房地产系统性风险，因果应予切割<span class="tl-tag">季度管理报告</span></span>',
+      '<span class="tlt" style="margin-top:6px"><b style="color:var(--gold2)">争点二 · 适当性义务是否履行（九民纪要 · 待核）</b></span>',
+      '<span class="tld">原告主张</span><span class="tlt">未充分了解客户、风险揭示不足，且开放期公告有"预期年收益率 7.9%"表述</span>',
+      '<span class="tld">我方抗辩</span><span class="tlt">原告系机构投资者，已签风险申明书"不保本不保收益"<span class="tl-tag warn">双录/回访材料待补 · 核心缺口</span></span>']},
+    {cmd:'/demand-draft 底层债券催收 --tone=正式',
+     title:'✉️ 催收函（初稿）· 致某项目公司（私募债券发行人）',
+     lines:[
+      '<span class="tlt">本所受泰和信托（受托人）委托，就贵司发行之私募债券<b style="color:var(--gold2)">逾期欠付本息</b>事宜，特函告如下：</span>',
+      '<span class="tld">一</span><span class="tlt">贵司应于 2022 年 7 月 20 日支付当期利息，至今欠付，已构成违约；</span>',
+      '<span class="tld">二</span><span class="tlt">限贵司于本函送达之日起 <b style="color:var(--gold2)">10 日内</b>付清全部欠付本息；</span>',
+      '<span class="tld">三</span><span class="tlt">逾期未付，受托人将继续推进诉讼、强制执行及担保财产处置程序。</span>',
+      '<span class="tlt"><span class="tl-tag">本函本身即受托人勤勉管理的证据之一</span><span class="tl-tag warn">草稿 · 须承办律师审定并签发</span></span>']},
+    {cmd:'/witness-interview-prep 销售经办人',
+     title:'🗣 证人访谈提纲 · 销售经办人（适当性销售环节）',
+     lines:[
+      '<span class="tld">背景核实</span><span class="tlt">任职情况、是否经办金梭纺织本笔 2000 万认购流程（2 问）</span>',
+      '<span class="tld">关键事实</span><span class="tlt">风险测评、双录、风险申明书签署的实际过程与在场人员（3 问）</span>',
+      '<span class="tld">矛盾点</span><span class="tlt">推介时是否使用"预期年收益率 7.9%""可赎回"等表述（2 问）</span>',
+      '<span class="tld">证据固定</span><span class="tlt">测评问卷、双录文件、回访记录的留存与调取路径（2 问）</span>',
+      '<span class="tlt"><span class="tl-tag warn">提示：避免诱导性提问 · 访谈记录须证人签字确认</span></span>']},
+    {cmd:'/diligence-issue-extraction 兴荣收购',
+     title:'🔍 尽调问题提取 · 监管/治理/合同/资产 四维度分级',
+     lines:[
+      '<span class="tld"><span class="lvl r">高</span></span><span class="tlt">监管｜未取得增值电信业务许可即开展相关经营</span>',
+      '<span class="tld"><span class="lvl r">高</span></span><span class="tlt">治理｜对赌回购安排与章程第 34 条特别决议门槛冲突</span>',
+      '<span class="tld"><span class="lvl y">中</span></span><span class="tlt">合同｜3 份核心客户合同含"控制权变更"终止条款</span>',
+      '<span class="tld"><span class="lvl y">中</span></span><span class="tlt">资产｜核心房产抵押登记与账面记载不符</span>',
+      '<span class="tld"><span class="lvl g">低</span></span><span class="tlt">监管｜历史社保公积金缴纳基数不足</span>',
+      '<span class="tlt"><span class="tl-tag">已按公司法 2023 修订核心检查点逐项核对</span></span>']},
+    {cmd:'/closing-checklist 兴荣收购 --date=2026-07-15',
+     title:'✅ 交割清单 · 预定交割日 2026-07-15',
+     lines:[
+      '<span class="tld" style="color:var(--green)">✓ 完成</span><span class="tlt">股东会决议通过（2026-06-02）</span>',
+      '<span class="tld" style="color:var(--green)">✓ 完成</span><span class="tlt">经营者集中申报——经核不达申报标准</span>',
+      '<span class="tld" style="color:var(--red)">◻ 待办</span><span class="tlt">增值电信许可整改<span class="tl-tag warn">交割先决条件 · 负责人：李律师</span></span>',
+      '<span class="tld" style="color:var(--red)">◻ 待办</span><span class="tlt">客户控制权变更同意函（已取得 1/3）</span>',
+      '<span class="tld" style="color:var(--red)">◻ 待办</span><span class="tlt">章程修订及工商变更登记</span>',
+      '<span class="tld" style="color:var(--red)">◻ 待办</span><span class="tlt">价款共管账户开立（银行流程中）</span>']},
+    {cmd:'/tabular-review 数据室/客户合同 --clause=控制权变更,独家性',
+     title:'📋 表格化审查 · 12 份客户合同 × 2 类条款',
+     lines:[
+      '<span class="tld">合同 A</span><span class="tlt">华东经销｜控制权变更：<b style="color:var(--red)">有，需事先书面同意</b>｜独家性：无</span>',
+      '<span class="tld">合同 B</span><span class="tlt">设备维保｜控制权变更：无｜独家性：<b style="color:var(--red)">区域独家，存续 3 年</b></span>',
+      '<span class="tld">合同 C</span><span class="tlt">OEM 代工｜控制权变更：<b style="color:var(--red)">有，对方可单方终止</b>｜独家性：无</span>',
+      '<span class="tld">其余 9 份</span><span class="tlt" style="color:var(--green)">未见相关条款 ✓</span>',
+      '<span class="tlt"><span class="tl-tag warn">3 份需在交割前处理 · 已同步至交割清单</span></span>']}
+  ];
+  function renderSkills(){
+    body.style.gridTemplateColumns='1fr';
+    body.innerHTML=
+    `<div class="pj">
+      <div class="pj-head">
+        <div class="pico">🧩</div>
+        <div><div class="pt">本所中国法技能库</div><div class="ps">86 个 Skills · 争议解决 / 公司并购 / 商业合同 / 劳动用工 / 知识产权 / 治理机制 六大类</div></div>
+        <span class="pbadge">全所同一套口径</span>
+      </div>
+      <div class="sk-main">
+        <div class="sk-lib">
+          <div class="pj-sec">技能库（节选 7 / 86 · 点任一技能即演示）</div>
+          <div id="skList"></div>
+        </div>
+        <div class="sk-run">
+          <div class="sk-cmd" id="skCmd"><span class="ps1">›</span> <span style="color:var(--dim)">← 点击左侧任一技能，看命令调用与输出…</span></div>
+          <div class="sk-out" id="skOut">
+            <div class="sot" id="skOutT"></div>
+            <div id="skTl"></div>
+          </div>
+        </div>
+      </div>
+      <div class="pj-foot">
+        <span class="note">💡 真实技能名，来自本所「中国法 Skills 改造成果」86 个技能库</span>
+        <button class="btn" id="skRun">▶ 演示：案件时间轴</button>
+      </div>
+    </div>`;
+    const list=document.getElementById('skList');
+    SK_LIB.forEach((s,i)=>{
+      const el=document.createElement('div');el.className='sk-item';el.id='ski'+i;
+      el.innerHTML='<span class="sic">'+s.ic+'</span><div class="sn"><div class="snn">/'+s.n+'</div><div class="snd">'+s.d+'</div></div>';
+      el.onclick=()=>runSk(i);
+      list.appendChild(el);
+    });
+    document.getElementById('skRun').onclick=()=>runSk(0);
+  }
+  function runSk(k){
+    pjClear();
+    const D=SK_DEMOS[k];
+    const cmd=document.getElementById('skCmd'),out=document.getElementById('skOut'),
+          outT=document.getElementById('skOutT'),tl=document.getElementById('skTl');
+    document.querySelectorAll('.sk-item').forEach(e=>e.classList.remove('fire'));
+    out.classList.remove('in');outT.innerHTML='';tl.innerHTML='';
+    /* 1. 点中的技能即刻高亮 */
+    document.getElementById('ski'+k).classList.add('fire');
+    /* 2. 命令逐字敲入 */
+    let i=0;const tick=setInterval(()=>{
+      i++;cmd.innerHTML='<span class="ps1">›</span> '+D.cmd.slice(0,i)+'<span class="caret"></span>';
+      if(i>=D.cmd.length){clearInterval(tick);cmd.innerHTML='<span class="ps1">›</span> '+D.cmd;}
+    },32);pjTimers.push(tick);
+    const t0=D.cmd.length*32;
+    /* 3. 输出标题与逐行结果 */
+    pjT(()=>{out.classList.add('in');outT.textContent=D.title;},t0+550);
+    D.lines.forEach((ln,j)=>{
+      pjT(()=>{
+        const el=document.createElement('div');el.className='tl-item';
+        el.innerHTML=ln;
+        tl.appendChild(el);requestAnimationFrame(()=>el.classList.add('in'));
+        tl.parentElement.scrollTop=tl.parentElement.scrollHeight;
+      },t0+950+j*360);
+    });
+  }
+
+  function render(k){
+    pjClear();
+    if(k===0)renderProject();
+    else if(k===1)renderArtifacts();
+    else renderSkills();
+  }
+  tabs.forEach(tb=>tb.onclick=()=>{tabs.forEach(x=>x.classList.remove('on'));tb.classList.add('on');render(+tb.dataset.k);});
+  render(0);
+})();
+
+/* ===== good question interactive ===== */
+const QEX=[
+ {bad:'"帮我看看这个合同有没有问题。"',
+  note:'→ 得到一堆泛泛而谈的"注意事项"，没有重点、没有出处、不能直接用。',
+  good:'"<span class="qseg" data-p="0">你是处理过上百起股权并购的资深律师。</span><span class="qseg" data-p="1">我方是买方，对手方议价能力强，附件是《股权转让协议》草案。</span><span class="qseg" data-p="2">请重点核查第 5 章对赌条款：①补偿是否封顶；②触发条件是否明确可量化；③是否与对赌相关裁判规则冲突。</span><span class="qseg" data-p="3">按风险高 / 中 / 低分级列出，每条给可落地的修改建议。</span><span class="qseg" data-p="4">每条附法条出处；拿不准的明确标"待核实"，不要硬答。</span>"'},
+ {bad:'"帮我查一下信托公司被投资者起诉要不要赔的案例。"',
+  note:'→ 得到几个教科书式旧案加泛泛原则，案号真假难辨，写不进答辩状。',
+  good:'"<span class="qseg" data-p="0">你是专办信托与资管纠纷的资深诉讼律师。</span><span class="qseg" data-p="1">我方代理受托人：机构投资者认购 2000 万集合资金信托，底层地产私募债违约，被诉返还本息约 2363 万。</span><span class="qseg" data-p="2">请围绕《信托法》第 25 条受托义务与《九民纪要》卖方机构义务，梳理 2023 年以来对受托人判全责 / 比例责任 / 免责的裁判要旨各 3 条。</span><span class="qseg" data-p="3">输出三部分：裁判要旨对照表、我方责任比例区间预判、补强证据清单。</span><span class="qseg" data-p="4">每条注明案号与来源，《九民纪要》条文标"待核"，禁止编造案例。</span>"'}
+];
+(function(){
+  const qq=document.getElementById('qq');if(!qq)return;
+  const tg=[...document.querySelectorAll('#qToggle button')];
+  const chips=[...document.querySelectorAll('#qprin span')];
+  function render(k){
+    const e=QEX[k];
+    qq.innerHTML='<div class="qbox bad"><div class="ql">✕ 弱提问</div><div class="qt">'+e.bad+'</div>'
+      +'<p class="note" style="margin-top:14px;line-height:1.7">'+e.note+'</p></div>'
+      +'<div class="qbox good"><div class="ql">✓ 好提问</div><div class="qt" style="line-height:2">'+e.good+'</div></div>';
+  }
+  function lite(p,on){
+    chips.forEach(c=>c.classList.toggle('lit',on&&c.dataset.p===p));
+    qq.querySelectorAll('.qseg').forEach(s=>s.classList.toggle('lit',on&&s.dataset.p===p));
+  }
+  chips.forEach(c=>{
+    c.addEventListener('mouseenter',()=>lite(c.dataset.p,true));
+    c.addEventListener('mouseleave',()=>lite(null,false));
+    c.addEventListener('click',()=>lite(c.dataset.p,true));
+  });
+  qq.addEventListener('mouseover',e=>{const s=e.target.closest('.qseg');if(s)lite(s.dataset.p,true);});
+  qq.addEventListener('mouseout',()=>lite(null,false));
+  tg.forEach(b=>b.onclick=()=>{tg.forEach(x=>x.classList.remove('on'));b.classList.add('on');render(+b.dataset.k);});
+  render(0);
+})();
+
+/* ===== deep research animation ===== */
+const RES={
+  built:false,
+  nodes:[
+    {x:170,y:90,t:'《信托法》25/33条',s:'受托义务 · 已核验'},
+    {x:170,y:230,t:'《九民纪要》72-77',s:'卖方机构义务 · 待核'},
+    {x:170,y:370,t:'类案 · 比例归责',s:'近三年裁判尺度'},
+    {x:830,y:90,t:'机构投资者抗辩',s:'买者自负边界'},
+    {x:830,y:230,t:'反向不利案例',s:'披露瑕疵 · 资金用途'},
+    {x:830,y:370,t:'举证要点',s:'持续管理证据链'}
+  ],
+  build(){
+    if(this.built)return;this.built=true;
+    const svg=document.getElementById('rsvg');const cx=500,cy=230;
+    let lk='',nd='';
+    this.nodes.forEach((n,i)=>{
+      lk+=`<path class="rlink" id="lk${i}" d="M${cx} ${cy} C ${(cx+n.x)/2} ${cy}, ${(cx+n.x)/2} ${n.y}, ${n.x} ${n.y}"/>`;
+    });
+    // center
+    nd+=`<g class="rnode on" id="center"><circle cx="${cx}" cy="${cy}" r="46" fill="url(#cg)" stroke="#c9a35e"/>
+      <text x="${cx}" y="${cy-4}" text-anchor="middle" fill="#e6cf9c" font-size="15" font-weight="700">核心问题</text>
+      <text x="${cx}" y="${cy+16}" text-anchor="middle" fill="#9bb0c8" font-size="11">受托人责任 · 比例归责</text></g>`;
+    this.nodes.forEach((n,i)=>{
+      nd+=`<g class="rnode" id="nd${i}"><rect x="${n.x-78}" y="${n.y-26}" width="156" height="52" rx="11" fill="#0e1f33" stroke="#5fd0e0"/>
+        <text x="${n.x}" y="${n.y-2}" text-anchor="middle" fill="#eef3f9" font-size="13" font-weight="650">${n.t}</text>
+        <text x="${n.x}" y="${n.y+15}" text-anchor="middle" fill="#5fd0e0" font-size="10.5">${n.s}</text>
+        <g id="ck${i}" opacity="0"><circle cx="${n.x+62}" cy="${n.y-18}" r="9" fill="#5fc08a"/><text x="${n.x+62}" y="${n.y-14}" text-anchor="middle" fill="#06210f" font-size="11" font-weight="800">✓</text></g></g>`;
+    });
+    svg.innerHTML=`<defs><radialGradient id="cg"><stop offset="0%" stop-color="rgba(201,163,94,.45)"/><stop offset="100%" stop-color="rgba(201,163,94,.05)"/></radialGradient></defs>`+lk+nd;
+  },
+  reset(){this.build();
+    document.querySelectorAll('#rsvg .rlink').forEach(e=>e.classList.remove('on'));
+    document.querySelectorAll('#rsvg .rnode').forEach((e,i)=>{if(e.id!=='center')e.classList.remove('on');});
+    this.nodes.forEach((_,i)=>document.getElementById('ck'+i).setAttribute('opacity','0'));
+    document.getElementById('rstep').textContent='';
+  },
+  run(){
+    this.reset();let i=0;const steps=this.nodes.length;
+    document.getElementById('rstep').textContent='① 拆解为 '+steps+' 个子问题，并行检索…';
+    const open=()=>{
+      if(i<steps){
+        document.getElementById('lk'+i).classList.add('on');
+        document.getElementById('nd'+i).classList.add('on');
+        setTimeout(()=>document.getElementById('ck'+i).setAttribute('opacity','1'),600);
+        i++;setTimeout(open,460);
+      }else{
+        setTimeout(()=>{document.getElementById('rstep').innerHTML='② 逐条核验出处 → ③ <span style="color:#e6cf9c">研究结论：主流裁判走“部分责任、比例归责”，建议主攻机构投资者自担风险 + 持续管理勤勉举证，优先补强 2022-07-04 公告原件</span>';},500);
+      }
+    };
+    setTimeout(open,500);
+  }
+};
+
+/* ===== thinking partner dialogue ===== */
+const CHAT=[
+ {r:'u',w:'承办律师',t:'尽调发现目标公司在交割前一年，向控股股东关联方低价转让了一处核心房产。我该怎么定性？'},
+ {r:'a',w:'Claude',t:'这笔交易至少有三个值得追的方向：<b>① 抽逃/利益输送</b>——是否损害公司及债权人利益；<b>② 关联交易程序瑕疵</b>——有无董事会/股东会回避表决与披露；<b>③ 影响估值与交割条件</b>——是否构成重大不利变化。你手上有交易对价与评估报告吗？'},
+ {r:'u',w:'承办律师',t:'有评估报告，但评估基准日比交易日早了八个月，且评估机构是关联方推荐的。'},
+ {r:'a',w:'Claude',t:'这两点都削弱评估的公允性。建议把举证重心放在<b>"价格显失公允"</b>：① 调取交易日前后同地段可比交易价；② 核查评估机构与关联方的关系链（可用企查查穿透）；③ 比对公司章程关于关联交易的表决门槛。我帮你列一份针对这笔交易的<b>补充尽调清单</b>？'},
+ {r:'u',w:'承办律师',t:'好，顺便把可能触发的法律后果和我方在 SPA 里应加的保护条款一起给我。'},
+ {r:'a',w:'Claude',t:'这就给你三件套：<b>法律后果</b>（交易可撤销/赔偿/影响交割）→ <b>补充尽调清单</b>（8 项，按优先级）→ <b>SPA 保护条款建议</b>（特别陈述保证、价格调整、专项赔偿与交割先决条件）。每一条都标注依据，便于你直接复核取用。'}
+];
+(function(){
+  const box=document.getElementById('chat');let timer=null;
+  window.runChat=function(){
+    if(timer)clearInterval(timer);box.innerHTML='';let i=0;
+    const add=()=>{
+      if(i>=CHAT.length){clearInterval(timer);return;}
+      const c=CHAT[i];const b=document.createElement('div');
+      b.className='bub '+c.r;b.innerHTML='<div class="who">'+c.w+'</div>'+c.t;
+      box.appendChild(b);box.scrollTop=box.scrollHeight;
+      requestAnimationFrame(()=>b.classList.add('show'));i++;
+    };
+    add();timer=setInterval(add,1500);
+  };
+  document.getElementById('runChat').onclick=window.runChat;
+})();
+
+/* ===== claude code terminal demo ===== */
+(function(){
+  const out=document.getElementById('termOut');if(!out)return;
+  const CMD='claude "用本地法规库核对《泰和信托案_答辩状（草稿）.docx》全部法规引用"';
+  const LINES=[
+    '<span class="dim3">⏺</span> 抽取法规引用 … 共 <b>12</b> 条',
+    '<span class="dim3">⏺</span> 逐条比对本地法规库（2026 法律汇编）…',
+    '&nbsp;',
+    '<span class="ok3">  ✓ HIT_OK    9 条</span>  本地预核通过（信托法 25/33 · 民法典 188/195 …）',
+    '<span class="warn3">  ⚠ HIT_DIFF  1 条</span>  《民诉法》第 24 条 — 引用 2021 版，现行为 2023 修正',
+    '<span class="err3">  ✕ MISS      2 条</span>  《九民纪要》第 72、77 条 — 本地库未收录',
+    '&nbsp;',
+    '<span class="dim3">⏺</span> 已生成报告 local_regulation_report.md',
+    '<span class="dim3">⏺</span> 已生成复核队列 pkulaw_queue.json（3 条 → 待人工确认后调北大法宝）',
+    '&nbsp;',
+    '<span class="warn3">⚠ 口径提示：HIT_OK 仅为"本地预核通过"，不得表述为"北大法宝已核验"</span>'
+  ];
+  let timers=[];
+  function clearT(){timers.forEach(t=>clearTimeout(t));timers=[]}
+  function runTerm(){
+    clearT();out.innerHTML='';
+    /* 命令逐字敲入 */
+    let i=0;const tick=setInterval(()=>{
+      i++;out.innerHTML='<span class="cmdl">› '+CMD.slice(0,i)+'</span><span class="caret"></span>';
+      if(i>=CMD.length){clearInterval(tick);out.innerHTML='<span class="cmdl">› '+CMD+'</span>';}
+    },22);timers.push(tick);
+    const t0=CMD.length*22;
+    LINES.forEach((ln,j)=>{
+      timers.push(setTimeout(()=>{
+        const el=document.createElement('span');el.className='tline';el.innerHTML=ln;
+        out.appendChild(el);requestAnimationFrame(()=>el.classList.add('in'));
+        out.scrollTop=out.scrollHeight;
+      },t0+600+j*420));
+    });
+  }
+  document.getElementById('termRun').onclick=runTerm;
+})();
+
+/* ===== computer use demo ===== */
+(function(){
+  const desk=document.getElementById('cuDesk');if(!desk)return;
+  const cur=document.getElementById('cuCursor'),step=document.getElementById('cuStep'),
+        f1=document.getElementById('cuF1'),f2=document.getElementById('cuF2'),
+        chip=document.getElementById('cuChip'),btn=document.getElementById('cuBtn');
+  let timers=[];
+  function clearT(){timers.forEach(t=>clearTimeout(t));timers=[]}
+  function T(fn,ms){timers.push(setTimeout(fn,ms))}
+  function typeIn(el,txt,t0){
+    [...txt].forEach((_,i)=>T(()=>{el.textContent=txt.slice(0,i+1)},t0+i*45));
+  }
+  function move(x,y){cur.style.left=x;cur.style.top=y}
+  function runCu(){
+    clearT();
+    f1.textContent='';f2.textContent='';f1.classList.remove('focus');f2.classList.remove('focus');
+    chip.classList.remove('in');btn.classList.remove('press');
+    move('82%','8%');
+    step.textContent='① 截屏识别页面结构，定位输入框…';
+    T(()=>{move('30%','34%');},500);
+    T(()=>{f1.classList.add('focus');step.textContent='② 键入当事人名称…';},1400);
+    typeIn(f1,'泰和信托有限公司（模拟）',1600);
+    T(()=>{f1.classList.remove('focus');move('30%','51%');f2.classList.add('focus');
+      step.textContent='③ 填写案由 → 上传已审定材料…';},3000);
+    typeIn(f2,'营业信托纠纷',3400);
+    T(()=>{f2.classList.remove('focus');move('30%','68%');},4200);
+    T(()=>chip.classList.add('in'),4900);
+    T(()=>{move('22%','84%');},5500);
+    T(()=>{btn.classList.add('press');
+      step.innerHTML='④ <span style="color:var(--gold2)">停在"提交"前——最后一步点击，由律师确认完成。</span>';},6400);
+  }
+  document.getElementById('cuRun').onclick=runCu;
+})();
+
+/* ===== mcp orchestration ===== */
+(function(){
+  const tools=[...document.querySelectorAll('#mcp .mtool')];
+  const aL=document.getElementById('arrowL'),aR=document.getElementById('arrowR'),
+        out=document.getElementById('mout'),log=document.getElementById('mlog');
+  const LOG=[
+    ['→ 企查查：穿透某项目公司股权 / 被执行信息…',''],
+    ['← 被执行 3 条 · 终本 1 条 · 财产线索已落表','ret'],
+    ['→ 北大法宝：get_article(信托法, 25 / 33)…',''],
+    ['← 条文原文返回 · 标记 [PKU MCP ✅]','ret']
+  ];
+  let timers=[];
+  function clearT(){timers.forEach(t=>clearTimeout(t));timers=[]}
+  window.runMcp=function(){
+    clearT();
+    tools.forEach(t=>t.classList.remove('fire'));aL.classList.remove('show');aR.classList.remove('show');
+    out.classList.remove('show');log.innerHTML='';
+    function addLog(k){
+      const el=document.createElement('span');el.className='ml '+LOG[k][1];el.textContent=LOG[k][0];
+      log.appendChild(el);requestAnimationFrame(()=>el.classList.add('in'));
+    }
+    timers.push(setTimeout(()=>{tools[0].classList.add('fire');aL.classList.add('show');addLog(0);},350));
+    timers.push(setTimeout(()=>addLog(1),1100));
+    timers.push(setTimeout(()=>{tools[1].classList.add('fire');aR.classList.add('show');addLog(2);},1600));
+    timers.push(setTimeout(()=>addLog(3),2400));
+    timers.push(setTimeout(()=>out.classList.add('show'),3000));
+  };
+  document.getElementById('runMcp').onclick=window.runMcp;
+})();
+
+/* ===== per-slide enter hooks ===== */
+function onEnter(i){
+  const sec=slides[i].dataset.sec;
+  if(sec==='深度研究 · 信托诉讼'&&slides[i].querySelector('#research')){RES.reset();}
+}
+document.getElementById('runRes').onclick=()=>RES.run();
+
+/* ===== auto tour (kiosk) mode — 按 A 启停，会前暖场/录屏用 ===== */
+(function(){
+  let on=false,timers=[];
+  const badge=document.getElementById('autoBadge');
+  function clearT(){timers.forEach(t=>clearTimeout(t));timers=[]}
+  function T(fn,ms){timers.push(setTimeout(fn,ms))}
+  function stop(){on=false;clearT();badge.style.display='none'}
+  function step(){
+    if(!on)return;
+    const s=slides[cur];
+    let dwell=7000;
+    if(s.classList.contains('divider'))dwell=3500;
+    const btn=s.querySelector('button.btn');
+    if(btn){T(()=>{if(on)btn.click()},1000);dwell=14000;}
+    if(s.querySelector('#models')){ /* 模型页：轮流点四张卡 */
+      const cards=[...s.querySelectorAll('.mcard')];
+      cards.forEach((c,i)=>T(()=>{if(on)c.click()},800+i*2300));
+      dwell=800+cards.length*2300+1200;
+    }
+    T(()=>{if(!on)return;go((cur+1)%N);step();},dwell);
+  }
+  addEventListener('keydown',e=>{
+    const k=e.key.toLowerCase();
+    if(k==='a'){
+      if(on)stop();
+      else{on=true;badge.style.display='flex';step();}
+    }else if(on&&(e.key==='ArrowRight'||e.key==='ArrowLeft'||e.key===' ')){stop();}
+  });
+})();
+</script>
+</body>
+</html>

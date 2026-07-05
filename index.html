@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude · 律师业务分享</title>
+<style>
+  :root{
+    --bg:#080f1c;--panel:#15263d;--ink:#eef3f9;--muted:#9bb0c8;--dim:#6b7f98;
+    --gold:#c9a35e;--gold2:#e6cf9c;--cyan:#5fd0e0;--cyan2:#8ce8f4;
+    --line:rgba(201,163,94,.26);
+    --serif:"Songti SC","STSong",Georgia,serif;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.6;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px}
+  .kicker{color:var(--gold);letter-spacing:.3em;font-size:12px;font-weight:700;text-transform:uppercase;margin-bottom:16px}
+  h1{font-family:var(--serif);font-size:clamp(30px,5vw,52px);line-height:1.15;font-weight:700;text-align:center}
+  h1 .gold{color:var(--gold2)}
+  .lead{color:var(--muted);font-size:16px;max-width:56ch;text-align:center;margin:18px auto 40px;line-height:1.85}
+  .cards{display:grid;gap:18px;grid-template-columns:repeat(3,1fr);max-width:960px;width:100%}
+  @media(max-width:820px){.cards{grid-template-columns:1fr}}
+  a.card{display:flex;flex-direction:column;text-decoration:none;color:inherit;
+    background:linear-gradient(180deg,var(--panel),rgba(21,38,61,.5));border:1px solid var(--line);
+    border-radius:16px;padding:26px 24px;transition:transform .2s,border-color .2s}
+  a.card:hover{transform:translateY(-5px);border-color:var(--gold)}
+  .num{font-family:var(--serif);font-size:14px;color:var(--cyan2);letter-spacing:.1em}
+  .ct{font-size:20px;font-weight:700;margin:10px 0 8px;color:var(--gold2)}
+  .cd{font-size:13.5px;color:var(--muted);line-height:1.75;flex:1}
+  .go{margin-top:16px;font-size:13px;color:var(--cyan2);font-weight:600}
+  footer{margin-top:44px;color:var(--dim);font-size:12px;text-align:center;line-height:1.9}
+</style>
+</head>
+<body>
+  <div class="kicker">大成上海 · 内部分享</div>
+  <h1>当大模型走进<br><span class="gold">律师的案头与思维</span></h1>
+  <p class="lead">三份配套材料，建议按顺序浏览：先建立概念，再看实战演示，最后是面向合伙人的落地介绍。所有互动均为拟真模拟，断网可放。</p>
+  <div class="cards">
+    <a class="card" href="AI入门_三大模型与未来.html">
+      <span class="num">01 · 概念课</span>
+      <div class="ct">三分钟看懂今天的 AI</div>
+      <div class="cd">大模型、Agent、三大 AI 家族与价格、提示词工程、未来方向——零技术背景可读。</div>
+      <div class="go">进入 →</div>
+    </a>
+    <a class="card" href="Claude律师业务_主题演讲.html">
+      <span class="num">02 · 实战演示</span>
+      <div class="ct">Claude 主题演讲</div>
+      <div class="cd">信托诉讼与并购尽调两个模拟案件，十处现场互动，把概念跑起来。</div>
+      <div class="go">进入 →</div>
+    </a>
+    <a class="card" href="Claude律师业务介绍.html">
+      <span class="num">03 · 落地介绍</span>
+      <div class="ct">接进日常工作流</div>
+      <div class="cd">面向合伙人与资深律师：价值主线、工作流嵌入、红线边界与上手四步。</div>
+      <div class="go">进入 →</div>
+    </a>
+  </div>
+  <footer>
+    内部学习材料 · 所有演示为拟真模拟 · 价格信息以各官网为准（2026 年初口径）
+  </footer>
+</body>
+</html>

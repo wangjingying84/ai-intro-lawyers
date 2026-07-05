@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三分钟看懂今天的 AI · 律师版</title>
+<style>
+  :root{
+    --bg:#080f1c;--bg2:#0d1828;--panel:#15263d;--panel2:#1a2f49;
+    --ink:#eef3f9;--muted:#9bb0c8;--dim:#6b7f98;
+    --gold:#c9a35e;--gold2:#e6cf9c;--cyan:#5fd0e0;--cyan2:#8ce8f4;
+    --green:#5fc08a;--red:#e8806f;--violet:#9d8cf0;
+    --line:rgba(201,163,94,.26);--cyl:rgba(95,208,224,.3);
+    --serif:"Songti SC","STSong",Georgia,serif;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,sans-serif;
+    --mono:"SF Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.6}
+  ::selection{background:rgba(201,163,94,.35)}
+
+  /* nav */
+  .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:4px;
+    padding:0 22px;height:52px;background:rgba(8,15,28,.82);backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(255,255,255,.06);overflow-x:auto}
+  .nav .logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--gold2);
+    letter-spacing:.08em;margin-right:14px;white-space:nowrap}
+  .nav a{color:var(--muted);text-decoration:none;font-size:13px;padding:7px 13px;border-radius:8px;
+    white-space:nowrap;transition:.2s}
+  .nav a:hover{color:var(--gold2);background:rgba(201,163,94,.08)}
+  .prog{position:fixed;top:52px;left:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--cyan));z-index:101;width:0}
+
+  /* layout */
+  .sec{max-width:1080px;margin:0 auto;padding:90px 28px 30px}
+  .kicker{color:var(--gold);letter-spacing:.3em;font-size:12px;font-weight:700;text-transform:uppercase;margin-bottom:14px}
+  h1{font-family:var(--serif);font-size:clamp(34px,5.5vw,64px);line-height:1.15;font-weight:700}
+  h2{font-family:var(--serif);font-size:clamp(24px,3.2vw,40px);font-weight:700;line-height:1.2;margin-bottom:10px}
+  h3{font-size:17px;margin-bottom:8px}
+  .lead{color:var(--muted);font-size:clamp(14.5px,1.4vw,17.5px);line-height:1.85;max-width:72ch;margin-top:12px}
+  .gold{color:var(--gold2)}.cyan{color:var(--cyan2)}
+  .hr{height:1px;background:linear-gradient(90deg,var(--gold),transparent);width:110px;margin:20px 0}
+
+  .rv{opacity:0;transform:translateY(26px);transition:.7s cubic-bezier(.2,.7,.2,1)}
+  .rv.in{opacity:1;transform:none}
+
+  .card{background:linear-gradient(180deg,var(--panel),rgba(21,38,61,.5));border:1px solid rgba(255,255,255,.06);
+    border-radius:16px;padding:22px;transition:transform .25s,border-color .25s}
+  .card:hover{transform:translateY(-4px);border-color:var(--line)}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:860px){.g2,.g3{grid-template-columns:1fr}}
+  .btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:var(--gold);color:#1a1205;
+    border:none;border-radius:10px;padding:11px 22px;font-weight:700;font-size:14px;font-family:var(--sans);transition:.18s}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 12px 26px -10px rgba(201,163,94,.6)}
+  .btn.cy{background:var(--cyan)}.btn.cy:hover{box-shadow:0 12px 26px -10px rgba(95,208,224,.6)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--gold2)}
+  .note{color:var(--dim);font-size:12.5px}
+  .chip{display:inline-block;font-size:12px;color:var(--cyan2);border:1px solid var(--cyl);border-radius:999px;padding:4px 12px;margin:3px 4px 0 0}
+  .chip.g{color:var(--gold2);border-color:var(--line)}
+
+  /* hero */
+  .hero{min-height:92vh;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+  .hero-stats{display:flex;gap:36px;margin-top:38px;flex-wrap:wrap}
+  .hstat .n{font-family:var(--serif);font-size:clamp(30px,3.6vw,48px);color:var(--gold2)}
+  .hstat .l{font-size:13px;color:var(--muted);margin-top:2px}
+  #bgfx{position:fixed;inset:0;z-index:-1;opacity:.7}
+
+  /* token demo */
+  .tok{background:#070e1a;border:1px solid var(--line);border-radius:16px;padding:26px;margin-top:26px;
+    box-shadow:0 30px 60px -34px rgba(0,0,0,.8)}
+  .tok-sent{font-family:var(--serif);font-size:clamp(17px,2vw,23px);line-height:2;min-height:76px;color:#e8eef6}
+  .tok-sent .new{color:var(--gold2);background:rgba(201,163,94,.14);border-radius:4px;padding:0 3px;animation:pop .4s}
+  @keyframes pop{from{transform:scale(.6);opacity:0}}
+  .tok-cands{margin-top:18px;display:grid;gap:9px;min-height:118px}
+  .cand{display:flex;align-items:center;gap:12px;opacity:0;transform:translateX(-12px);transition:.4s}
+  .cand.in{opacity:1;transform:none}
+  .cand .w{font-size:14.5px;min-width:130px;color:#dbe5f1}
+  .cand .bar{flex:1;height:18px;background:rgba(255,255,255,.06);border-radius:9px;overflow:hidden}
+  .cand .bar i{display:block;height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,var(--cyan),var(--gold));transition:width .7s cubic-bezier(.2,.7,.2,1)}
+  .cand.win .bar i{background:linear-gradient(90deg,var(--gold),var(--gold2))}
+  .cand .p{font-family:var(--mono);font-size:12px;color:var(--cyan2);min-width:46px;text-align:right}
+  .cand.win .w{color:var(--gold2);font-weight:700}
+  .tok-foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;flex-wrap:wrap;gap:10px}
+
+  /* agent compare */
+  .ag{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px}
+  @media(max-width:860px){.ag{grid-template-columns:1fr}}
+  .ag-col{background:#070e1a;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+  .ag-col.agent{border-color:var(--cyl)}
+  .ag-head{padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.07);font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:9px}
+  .ag-head .tagx{margin-left:auto;font-size:11px;border-radius:6px;padding:3px 9px}
+  .ag-col.chatm .tagx{background:rgba(155,176,200,.12);color:var(--muted)}
+  .ag-col.agent .tagx{background:rgba(95,208,224,.12);color:var(--cyan2)}
+  .ag-body{padding:18px;flex:1;min-height:240px}
+  .ag-bub{background:var(--panel2);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:13px 15px;
+    font-size:13px;color:var(--muted);line-height:1.8;opacity:0;transition:.5s;transform:translateY(10px)}
+  .ag-bub.in{opacity:1;transform:none}
+  .ag-task{display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:13.5px;color:var(--muted);
+    opacity:0;transform:translateX(-12px);transition:.45s}
+  .ag-task.in{opacity:1;transform:none}
+  .ag-task .ck{min-width:20px;height:20px;border-radius:6px;border:1.5px solid var(--cyl);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--green);margin-top:1px}
+  .ag-task.done .ck{background:rgba(95,192,138,.15);border-color:var(--green)}
+  .ag-task b{color:var(--gold2);font-weight:600}
+  .loop{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:22px;flex-wrap:wrap}
+  .loop .ln{background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:11px 18px;
+    font-size:13.5px;font-weight:600;transition:.3s}
+  .loop .ln.lit{border-color:var(--cyan);color:var(--cyan2);box-shadow:0 0 0 1px var(--cyl)}
+  .loop .la{color:var(--gold);opacity:.6}
+
+  /* formula */
+  .formula{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:26px}
+  .fx{background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px 20px;text-align:center;min-width:118px}
+  .fx .fi{font-size:26px}.fx .ft{font-size:13px;margin-top:6px;color:var(--muted)}.fx .ft b{color:var(--ink)}
+  .fop{font-family:var(--serif);font-size:30px;color:var(--gold)}
+  .fx.res{border-color:var(--gold);background:linear-gradient(180deg,rgba(201,163,94,.1),transparent)}
+
+  /* vendor tabs */
+  .vtabs{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+  .vtab{cursor:pointer;border:1px solid rgba(255,255,255,.1);background:var(--panel);border-radius:12px;
+    padding:13px 24px;font-size:15px;font-weight:700;color:var(--muted);transition:.25s;display:flex;align-items:center;gap:10px}
+  .vtab .vd{width:10px;height:10px;border-radius:50%}
+  .vtab.on{color:#1a1205}
+  .vtab[data-k="0"].on{background:var(--gold);border-color:var(--gold)}
+  .vtab[data-k="1"].on{background:#7ec8a9;border-color:#7ec8a9}
+  .vtab[data-k="2"].on{background:#8cb4f0;border-color:#8cb4f0}
+  .vpanel{margin-top:20px;background:#0a1524;border:1px solid var(--line);border-radius:18px;padding:26px;display:none}
+  .vpanel.on{display:block;animation:fade .4s}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}}
+  .vtop{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .vtop h3{font-family:var(--serif);font-size:26px;color:var(--gold2);margin:0}
+  .vtop .vco{font-size:13px;color:var(--dim)}
+  .vgrid{display:grid;grid-template-columns:1.15fr .85fr;gap:24px;margin-top:18px}
+  @media(max-width:860px){.vgrid{grid-template-columns:1fr}}
+  .vfeat p{font-size:14px;color:var(--muted);line-height:1.85;margin-bottom:10px}
+  .vfeat .star{background:var(--panel2);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+  .vfeat .star b{color:var(--gold2)}
+  .vfeat .star span{display:block;font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.7}
+  table.price{width:100%;border-collapse:collapse;font-size:13px}
+  .price th{text-align:left;color:var(--gold);font-size:11px;letter-spacing:.1em;padding:8px 10px;border-bottom:1px solid var(--line)}
+  .price td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.05);color:#cdd9e8;vertical-align:top}
+  .price .pp{font-family:var(--mono);color:var(--gold2);white-space:nowrap}
+  .vlaw{margin-top:14px;border-left:2px solid var(--cyan);padding-left:14px;font-size:13.5px;color:var(--cyan2);line-height:1.8}
+
+  /* prompt section */
+  .pw{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:24px}
+  @media(max-width:860px){.pw{grid-template-columns:1fr}}
+  .pbox{border-radius:16px;padding:20px 22px;border:1px solid;font-size:14px;line-height:1.9}
+  .pbox.bad{border-color:rgba(232,128,111,.35);background:linear-gradient(180deg,rgba(232,128,111,.06),transparent)}
+  .pbox.good{border-color:rgba(95,192,138,.4);background:linear-gradient(180deg,rgba(95,192,138,.07),transparent)}
+  .pbox .pl{font-size:11px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px}
+  .pbox.bad .pl{color:var(--red)}.pbox.good .pl{color:var(--green)}
+  .pbox em{color:var(--gold2);font-style:normal;background:rgba(201,163,94,.12);border-radius:3px;padding:0 3px}
+
+  /* future */
+  .fut{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:26px}
+  @media(max-width:860px){.fut{grid-template-columns:1fr}}
+  .fcard{background:linear-gradient(180deg,var(--panel),rgba(21,38,61,.45));border:1px solid rgba(255,255,255,.06);
+    border-radius:16px;padding:20px;position:relative;overflow:hidden;transition:.25s}
+  .fcard:hover{transform:translateY(-4px);border-color:var(--line)}
+  .fcard .fy{font-family:var(--mono);font-size:11px;color:var(--cyan2);letter-spacing:.1em}
+  .fcard h3{margin-top:8px}
+  .fcard p{font-size:13px;color:var(--muted);line-height:1.75;margin-top:6px}
+  .fcard .ico{font-size:24px;position:absolute;top:16px;right:18px;opacity:.85}
+
+  /* day timeline */
+  .day{margin-top:26px;display:grid;gap:0}
+  .drow{display:grid;grid-template-columns:86px 1fr;gap:18px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .drow .dt{font-family:var(--mono);font-size:13px;color:var(--cyan2);padding-top:2px}
+  .drow .dd{font-size:14px;color:var(--muted);line-height:1.75}
+  .drow .dd b{color:var(--gold2);font-weight:600}
+
+  /* closing */
+  .closing{text-align:center;padding:110px 28px 80px}
+  .closing h2{font-size:clamp(26px,3.8vw,46px);line-height:1.4}
+  .closing .em{background:linear-gradient(120deg,var(--gold2),var(--cyan2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  footer{padding:26px;text-align:center;color:var(--dim);font-size:12px;border-top:1px solid rgba(255,255,255,.05);line-height:1.9}
+</style>
+</head>
+<body>
+<canvas id="bgfx"></canvas>
+<nav class="nav">
+  <span class="logo">✦ AI 入门 · 律师版</span>
+  <a href="#llm">什么是大模型</a>
+  <a href="#agent">什么是 Agent</a>
+  <a href="#vendors">三大家族与价格</a>
+  <a href="#prompt">提示词工程</a>
+  <a href="#future">未来方向</a>
+  <a href="#change">怎样改变我们</a>
+</nav>
+<div class="prog" id="prog"></div>
+
+<!-- HERO -->
+<section class="sec hero">
+  <div class="rv">
+    <div class="kicker">开场篇 · 约 20 分钟 · 概念课</div>
+    <h1>三分钟看懂今天的 AI<br><span class="gold">以及它将怎样改变我们</span></h1>
+    <div class="hr"></div>
+    <p class="lead">不需要任何技术背景。往下滚动，你会亲眼看到大模型是怎么"思考"的、Agent 和聊天机器人差在哪、三大 AI 家族怎么选、每月花多少钱——以及为什么说，这是律师职业三十年一遇的分水岭。</p>
+    <div class="hero-stats">
+      <div class="hstat"><div class="n" data-cnt="200000">0</div><div class="l">一次能读的字数（约一整套卷宗）</div></div>
+      <div class="hstat"><div class="n" data-cnt="90">0</div><div class="l">顶尖模型法律任务水平（百分位）</div></div>
+      <div class="hstat"><div class="n" data-cnt="3">0</div><div class="l">分钟 · 看完本页核心概念</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- LLM -->
+<section class="sec" id="llm">
+  <div class="rv">
+    <div class="kicker">概念一</div>
+    <h2>什么是大模型？一台"下一个词"预测机</h2>
+    <p class="lead">把人类几乎所有公开文字读了一遍之后，它学会了一件事：<span class="gold">给定前文，猜下一个词</span>。猜得足够准，就"涌现"出理解、推理和写作的能力。不信？你可以亲眼看它猜——下面这台就是慢放的大模型。</p>
+  </div>
+  <div class="tok rv">
+    <div class="tok-sent" id="tokSent">信托公司未尽适当性义务，应当承担相应的</div>
+    <div class="tok-cands" id="tokCands"><div class="note" style="padding-top:40px;text-align:center">点击「预测下一个词」，看它给每个候选词算概率 ↓</div></div>
+    <div class="tok-foot">
+      <span class="note">真实模型每秒做几十次这样的预测，候选词来自十几万个词表</span>
+      <div style="display:flex;gap:10px">
+        <button class="btn ghost" id="tokStep">预测下一个词</button>
+        <button class="btn" id="tokAuto">▶ 一键生成整句</button>
+      </div>
+    </div>
+  </div>
+  <div class="rv" style="margin-top:22px">
+    <p class="lead" style="max-width:none">看明白了吗？它没有在"查法条"，它在<span class="gold">算概率</span>。这解释了两件事：为什么它写东西如此流畅老练——因为它见过的法律文本比任何人一辈子读的都多；也解释了它为什么会"编造"——<span style="color:var(--red)">它永远会给出"最像答案的答案"，哪怕没有依据。</span>所以引用必须人工复核，这不是它的 bug，是它的本性。</p>
+  </div>
+</section>
+
+<!-- AGENT -->
+<section class="sec" id="agent">
+  <div class="rv">
+    <div class="kicker">概念二</div>
+    <h2>什么是 Agent？给大脑装上手脚</h2>
+    <p class="lead">大模型只会"说"。Agent（智能体）是让它"做"：给它工具（读文件、查数据库、操作软件）、给它记忆、让它<span class="cyan">感知 → 规划 → 行动 → 检查</span>地循环，直到任务完成。同一个任务，两种形态的差距是这样的——</p>
+  </div>
+  <div class="ag rv">
+    <div class="ag-col chatm">
+      <div class="ag-head">💬 普通聊天模式 <span class="tagx">只能"说"</span></div>
+      <div class="ag-body" id="agChat">
+        <div class="ag-bub" id="agBub">收到任务后，它回复你一段<b>文字建议</b>：「好的，整理卷宗时间线的步骤如下：第一步，打开文件夹……第二步……」<br><br>——然后呢？<b style="color:var(--red)">然后就没有然后了，活还是你干。</b></div>
+      </div>
+    </div>
+    <div class="ag-col agent">
+      <div class="ag-head">🤖 Agent 模式 <span class="tagx">真的去"做"</span></div>
+      <div class="ag-body" id="agTasks"></div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px" class="rv">
+    <span class="note">任务：「把案件文件夹里 32 份卷宗的时间线整理成表格」（模拟演示）</span>
+    <button class="btn cy" id="agRun">▶ 同一个任务，两边一起跑</button>
+  </div>
+  <div class="loop rv" id="loop">
+    <span class="ln">① 感知</span><span class="la">→</span>
+    <span class="ln">② 规划</span><span class="la">→</span>
+    <span class="ln">③ 行动</span><span class="la">→</span>
+    <span class="ln">④ 检查</span><span class="la">↻</span>
+  </div>
+  <div class="rv" style="margin-top:34px">
+    <h2 style="font-size:clamp(20px,2.4vw,30px)">大模型与 Agent 的关系，一个公式说清</h2>
+    <div class="formula">
+      <div class="fx"><div class="fi">🧠</div><div class="ft"><b>大模型</b><br>大脑 · 会想会说</div></div>
+      <span class="fop">+</span>
+      <div class="fx"><div class="fi">🛠</div><div class="ft"><b>工具</b><br>手脚 · 能操作</div></div>
+      <span class="fop">+</span>
+      <div class="fx"><div class="fi">📒</div><div class="ft"><b>记忆</b><br>记得住上下文</div></div>
+      <span class="fop">+</span>
+      <div class="fx"><div class="fi">🎯</div><div class="ft"><b>目标循环</b><br>不达目的不收工</div></div>
+      <span class="fop">=</span>
+      <div class="fx res"><div class="fi">🤖</div><div class="ft"><b>Agent</b><br>一位数字员工</div></div>
+    </div>
+    <p class="lead" style="margin-top:20px">类比：大模型是<span class="gold">发动机</span>，Agent 是<span class="gold">整辆车</span>。Claude Code、ChatGPT 的 Codex、各家的"数字员工"，本质都是围绕一颗大模型大脑，装上不同的手脚。<span class="cyan">2024 年大家比谁的大脑聪明，2026 年开始比谁的员工好用。</span></p>
+  </div>
+</section>
+
+<!-- VENDORS -->
+<section class="sec" id="vendors">
+  <div class="rv">
+    <div class="kicker">概念三 · 选型与价格</div>
+    <h2>三大家族：Claude · ChatGPT · Gemini</h2>
+    <p class="lead">三家都是第一梯队，但性格不同。点开看各家的明星产品、特色和订阅价格。</p>
+  </div>
+  <div class="vtabs rv" id="vtabs">
+    <div class="vtab on" data-k="0"><span class="vd" style="background:var(--gold)"></span>Claude · Anthropic</div>
+    <div class="vtab" data-k="1"><span class="vd" style="background:#7ec8a9"></span>ChatGPT · OpenAI</div>
+    <div class="vtab" data-k="2"><span class="vd" style="background:#8cb4f0"></span>Gemini · Google</div>
+  </div>
+
+  <div class="vpanel on rv" data-k="0">
+    <div class="vtop"><h3>Claude</h3><span class="vco">Anthropic（美国）· 旗舰模型：Fable 5 / Opus 4.8 / Sonnet 4.6 / Haiku 4.5</span></div>
+    <div class="vgrid">
+      <div class="vfeat">
+        <div class="star"><b>🖥️ Cowork（桌面协同）</b><span>Claude 在你的电脑桌面上协同干活：读本地文件夹、跨应用操作、整理文档台账——"坐在你工位上的数字同事"。</span></div>
+        <div class="star"><b>⌨️ Claude Code（动手干活的 Agent）</b><span>给它一句话，它直接在你电脑里批量处理文件、运行程序、核对数据——量大、重复、要落地到文件的活都归它。</span></div>
+        <p><span class="chip g">超长文本</span><span class="chip g">法律写作质量</span><span class="chip g">Projects 案件库</span><span class="chip g">Artifacts 可交付物</span><span class="chip g">Skills 技能库</span><span class="chip g">MCP 接专业数据源</span></p>
+        <div class="vlaw">律师视角：长文档深度分析与中文法律写作公认强项，且最早把"AI 当同事用"做成产品——适合作为<b style="color:var(--gold2)">主力工作台</b>。这里列的 Projects / Artifacts / Skills / Code / Cowork / MCP，<b style="color:var(--gold2)">下半场逐一现场演示</b>。</div>
+      </div>
+      <div>
+        <table class="price">
+          <thead><tr><th>档位</th><th>价格*</th><th>适合谁</th></tr></thead>
+          <tbody>
+            <tr><td>Free</td><td class="pp">$0</td><td>先体验，每天有限额度</td></tr>
+            <tr><td>Pro</td><td class="pp">$20 /月</td><td>个人主力：Projects、Artifacts、更高额度</td></tr>
+            <tr><td>Max</td><td class="pp">$100–200 /月</td><td>重度使用：Code / Cowork 高额度，跑大活</td></tr>
+            <tr><td>Team / 企业</td><td class="pp">约 $25–30 /人/月</td><td>团队共享、管理与合规功能</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="vpanel rv" data-k="1">
+    <div class="vtop"><h3>ChatGPT</h3><span class="vco">OpenAI（美国）· 旗舰模型：GPT-5 系列</span></div>
+    <div class="vgrid">
+      <div class="vfeat">
+        <div class="star"><b>⌨️ Codex（编程与自动化 Agent）</b><span>把任务派给云端的 Codex，它自己写代码、跑任务、交结果——技术团队的得力干将，律所信息化也用得上。</span></div>
+        <div class="star"><b>🌍 最大的用户生态</b><span>全球用户最多，新功能最先全民化：联网搜索、语音对话、图像理解、自定义 GPTs 商店、Sora 视频生成。</span></div>
+        <p><span class="chip g">生态最大</span><span class="chip g">多模态全面</span><span class="chip g">自定义 GPTs</span><span class="chip g">语音交互</span><span class="chip g">Sora 视频</span></p>
+        <div class="vlaw">律师视角：万金油型通用助手，尝鲜新能力的首选；检索问答、头脑风暴、对外沟通文案都顺手——适合作为<b style="color:var(--gold2)">通用副驾</b>。</div>
+      </div>
+      <div>
+        <table class="price">
+          <thead><tr><th>档位</th><th>价格*</th><th>适合谁</th></tr></thead>
+          <tbody>
+            <tr><td>Free</td><td class="pp">$0</td><td>基础体验</td></tr>
+            <tr><td>Plus</td><td class="pp">$20 /月</td><td>个人日常：更强模型与多模态</td></tr>
+            <tr><td>Pro</td><td class="pp">$200 /月</td><td>重度：最高算力档、深度推理不限量</td></tr>
+            <tr><td>Team / 企业</td><td class="pp">约 $25–30 /人/月</td><td>团队工作区与数据隔离</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="vpanel rv" data-k="2">
+    <div class="vtop"><h3>Gemini</h3><span class="vco">Google（美国）· 旗舰模型：Gemini 3 系列</span></div>
+    <div class="vgrid">
+      <div class="vfeat">
+        <div class="star"><b>📚 NotebookLM（资料变知识库）</b><span>把几十份文件扔进去，它变成一个"只依据你的资料回答"的私人研究员——还能把材料自动生成一期两人对谈的播客音频，开车路上听完一个案子的全部背景。</span></div>
+        <div class="star"><b>🔗 谷歌全家桶打通</b><span>Gmail、Docs、Drive、日历原生集成；搜索引擎级的联网能力；超长上下文一次吞下海量资料。</span></div>
+        <p><span class="chip g">NotebookLM</span><span class="chip g">音频概览/播客</span><span class="chip g">Workspace 集成</span><span class="chip g">超长上下文</span><span class="chip g">Veo 视频</span></p>
+        <div class="vlaw">律师视角：NotebookLM 是被严重低估的研读神器——判例集、行业报告、培训材料扔进去就能问答+生成播客——适合作为<b style="color:var(--gold2)">资料研读与知识管理</b>。</div>
+      </div>
+      <div>
+        <table class="price">
+          <thead><tr><th>档位</th><th>价格*</th><th>适合谁</th></tr></thead>
+          <tbody>
+            <tr><td>Free</td><td class="pp">$0</td><td>基础体验，NotebookLM 有免费版</td></tr>
+            <tr><td>Google AI Pro</td><td class="pp">约 $20 /月</td><td>个人：高阶模型 + NotebookLM 扩容 + 2TB 网盘</td></tr>
+            <tr><td>Google AI Ultra</td><td class="pp">约 $250 /月</td><td>极重度：最高档模型与视频生成额度</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <p class="note rv" style="margin-top:14px">* 以上为 2026 年初各官网美元月费的大致口径，仅供横向比较；实际价格、档位与功能以各官网当日为准。三家都值得用免费版先各试一周——<span class="gold">订阅哪家，是用出来的，不是听出来的。</span></p>
+</section>
+
+<!-- PROMPT -->
+<section class="sec" id="prompt">
+  <div class="rv">
+    <div class="kicker">概念四</div>
+    <h2>什么是提示词工程？跟 AI 说话的手艺</h2>
+    <p class="lead">还记得上面那台"概率机"吗？这就是答案的来源：<span class="gold">你输入的每一个字，都在收窄它的概率分布。</span>角色、背景、标准、格式、约束——所谓提示词工程，本质就是用文字把概率"锁"到你要的那个答案上。</p>
+  </div>
+  <div class="pw rv">
+    <div class="pbox bad">
+      <div class="pl">✕ 概率没锁住</div>
+      "帮我总结一下这份判决。"
+      <p class="note" style="margin-top:12px">→ 一万种"总结"都符合这句话，它只能给你概率最高的那种：平庸的内容复述。</p>
+    </div>
+    <div class="pbox good">
+      <div class="pl">✓ 概率被锁定</div>
+      "<em>为合伙人案件汇报做准备</em>（背景），提炼这份判决的<em>裁判要旨、本案可援引的段落</em>（标准），<em>300 字以内、注明页码</em>（格式），<em>与我方立场不利的部分单独列出</em>（约束）。"
+    </div>
+  </div>
+  <p class="lead rv" style="margin-top:18px">原理就讲到这——<span class="cyan">五个零件具体怎么拆、怎么用在合同审查和类案检索里，下半场用一个互动页现场练。</span>先记住一个动作：<span class="gold">把你平时交代实习生的那段话，原封不动打给它。</span>会带人，就会用 AI。</p>
+</section>
+
+<!-- FUTURE -->
+<section class="sec" id="future">
+  <div class="rv">
+    <div class="kicker">往前看五年</div>
+    <h2>AI 接下来往哪走？</h2>
+    <p class="lead">不预测股价，只说六个已经清晰可见的方向——每一个都和律师有关。</p>
+  </div>
+  <div class="fut rv">
+    <div class="fcard"><div class="ico">🤖</div><div class="fy">已经发生</div><h3>从聊天到代办</h3><p>Agent 数字员工普及：不再是"问一句答一句"，而是把整段工作流交给它——尽调初筛、引用核对、台账维护自动完成。</p></div>
+    <div class="fcard"><div class="ico">🎬</div><div class="fy">已经发生</div><h3>多模态融合</h3><p>文字、语音、图像、视频一体。开庭录音直接变笔录与争点清单，现场照片即时进入证据分析。</p></div>
+    <div class="fcard"><div class="ico">🏛</div><div class="fy">1–2 年</div><h3>专属化</h3><p>律所私有知识库 + 接入权威法律数据库的专属 AI：它读过你们所有判例与模板，越用越像"本所培养出来的人"。</p></div>
+    <div class="fcard"><div class="ico">🧑‍💼</div><div class="fy">2–3 年</div><h3>人机分工重构</h3><p>初级认知劳动大规模自动化。律师的稀缺价值向判断、谈判、关系与责任承担集中——计费逻辑随之改变。</p></div>
+    <div class="fcard"><div class="ico">🦾</div><div class="fy">3–5 年</div><h3>走进物理世界</h3><p>具身智能与机器人把 AI 从屏幕里带出来。数字世界的"动手能力"延伸到现实操作。</p></div>
+    <div class="fcard" style="border-color:var(--line)"><div class="ico">⚖️</div><div class="fy">同步发生 · 律师的新蓝海</div><h3>AI 治理与监管</h3><p>AI 立法、算法合规、数据跨境、AI 侵权责任——监管必然到来，而<span class="gold">每一部新法，都是律师的新业务。</span></p></div>
+  </div>
+</section>
+
+<!-- CHANGE -->
+<section class="sec" id="change">
+  <div class="rv">
+    <div class="kicker">最后 · 它怎样改变我们</div>
+    <h2>一位 2027 年合伙人的一天</h2>
+  </div>
+  <div class="day rv">
+    <div class="drow"><span class="dt">07:30</span><span class="dd">通勤路上，听 NotebookLM 把昨晚新收的 200 页卷宗生成的<b>12 分钟播客</b>，到所里已掌握全案脉络。</span></div>
+    <div class="drow"><span class="dt">09:00</span><span class="dd">打开案件 Project 问一句"今天开庭最大的风险点"，AI 基于全部卷宗给出<b>三个风险与应对</b>，每条带出处。<span class="chip g" style="font-size:10.5px;padding:2px 9px;margin-left:6px">下半场有演示</span></span></div>
+    <div class="drow"><span class="dt">10:30</span><span class="dd">让 AI 扮演<b>对方律师</b>攻击我方主张二十分钟——比同事陪练更狠，因为它读过所有不利判例。<span class="chip g" style="font-size:10.5px;padding:2px 9px;margin-left:6px">下半场有演示</span></span></div>
+    <div class="drow"><span class="dt">14:00</span><span class="dd">新并购项目进场：Agent 通宵跑完数据室初筛，上午已有<b>风险矩阵</b>；下午你只开两个会——一个定策略，一个见客户。</span></div>
+    <div class="drow"><span class="dt">17:00</span><span class="dd">答辩状定稿前，引用核对程序跑一遍：<b>一处版本差异被拦下</b>。签字的依然是你——这一点永远不变。<span class="chip g" style="font-size:10.5px;padding:2px 9px;margin-left:6px">下半场有演示</span></span></div>
+    <div class="drow"><span class="dt">18:30</span><span class="dd">准点下班。省下来的三小时，给了客户晚餐，和家人。</span></div>
+  </div>
+</section>
+
+<div class="closing rv">
+  <h2>概念课到此为止。<br><span class="em">下半场，把这些概念变成你案头的真功夫。</span></h2>
+  <p class="lead" style="margin:22px auto 0;text-align:center">两个模拟案件、十处现场互动——刚才讲的大模型、Agent、提示词，<br>接下来你会看到它们在信托诉讼和并购尽调里真实地跑起来。</p>
+  <a href="Claude律师业务_主题演讲.html" class="btn" style="margin-top:30px;text-decoration:none;font-size:16px;padding:14px 34px">▶ 进入下半场 · 实战演示</a>
+  <p class="note" style="margin-top:26px">本页留作会后自学材料：今晚注册一个免费账号，把一份不涉密的材料发给它，问出第一个问题。</p>
+</div>
+
+<footer>
+  本页为内部学习材料 · 所有演示为拟真模拟，断网可放 · 价格信息以各官网为准（2026 年初口径）<br>
+  与主演讲《当大模型走进律师的案头与思维》配套使用
+</footer>
+
+<script>
+/* particles */
+(function(){
+  const c=document.getElementById('bgfx'),x=c.getContext('2d');let w,h,pts=[];
+  function rs(){w=c.width=innerWidth;h=c.height=innerHeight;
+    pts=Array.from({length:Math.min(60,Math.floor(w*h/30000))},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.22,r:Math.random()*1.5+.4}));}
+  rs();addEventListener('resize',rs);
+  (function loop(){x.clearRect(0,0,w,h);
+    for(const p of pts){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;
+      x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fillStyle='rgba(201,163,94,.4)';x.fill();}
+    requestAnimationFrame(loop);})();
+})();
+
+/* scroll progress + reveal */
+const prog=document.getElementById('prog');
+addEventListener('scroll',()=>{
+  const t=document.documentElement;
+  prog.style.width=(t.scrollTop/(t.scrollHeight-t.clientHeight)*100)+'%';
+},{passive:true});
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.12});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+/* hero counters */
+(function(){
+  const els=document.querySelectorAll('[data-cnt]');
+  const io2=new IntersectionObserver(es=>es.forEach(e=>{
+    if(!e.isIntersecting||e.target.dataset.done)return;e.target.dataset.done=1;
+    const T=+e.target.dataset.cnt;const t0=performance.now();
+    (function tick(t){const p=Math.min(1,(t-t0)/1400);
+      e.target.textContent=Math.round(T*(1-Math.pow(1-p,3))).toLocaleString();
+      if(p<1)requestAnimationFrame(tick);})(t0);
+  }),{threshold:.5});
+  els.forEach(el=>io2.observe(el));
+})();
+
+/* ===== token prediction demo ===== */
+const TOK_STEPS=[
+ {cands:[['赔偿责任',78],['补充责任',13],['违约责任',6]],pick:0,append:'赔偿责任'},
+ {cands:[['。但',46],['，且',31],['。同时',17]],pick:0,append:'。但'},
+ {cands:[['机构投资者',55],['委托人',26],['投资者',14]],pick:0,append:'机构投资者'},
+ {cands:[['亦应',58],['也应当',24],['仍需',12]],pick:0,append:'亦应'},
+ {cands:[['自担相应风险。',72],['承担部分损失。',18],['谨慎注意。',7]],pick:0,append:'自担相应风险。'}
+];
+(function(){
+  const sent=document.getElementById('tokSent'),cbox=document.getElementById('tokCands');
+  let step=0,busy=false,timers=[];
+  function clearT(){timers.forEach(t=>clearTimeout(t));timers=[]}
+  function T(fn,ms){timers.push(setTimeout(fn,ms))}
+  function doStep(done){
+    if(step>=TOK_STEPS.length){if(done)done();return}
+    busy=true;const S=TOK_STEPS[step];cbox.innerHTML='';
+    S.cands.forEach((c,i)=>{
+      const el=document.createElement('div');el.className='cand'+(i===S.pick?' win':'');
+      el.innerHTML='<span class="w">'+c[0]+'</span><span class="bar"><i></i></span><span class="p">'+c[1]+'%</span>';
+      cbox.appendChild(el);
+      T(()=>{el.classList.add('in');el.querySelector('i').style.width=c[1]+'%';},120+i*160);
+    });
+    T(()=>{
+      const sp=document.createElement('span');sp.className='new';sp.textContent=TOK_STEPS[step].append;
+      sent.appendChild(sp);step++;busy=false;
+      if(done)T(done,420);
+      if(step>=TOK_STEPS.length)cbox.innerHTML='<div class="note" style="padding-top:34px;text-align:center">✓ 整句生成完毕——每个词，都是一次概率计算。点「一键生成」可重看。</div>';
+    },1150);
+  }
+  function reset(){clearT();step=0;busy=false;
+    sent.textContent='信托公司未尽适当性义务，应当承担相应的';cbox.innerHTML='';}
+  document.getElementById('tokStep').onclick=()=>{if(busy)return;if(step>=TOK_STEPS.length)reset();doStep();};
+  document.getElementById('tokAuto').onclick=()=>{reset();(function next(){doStep(next)})();};
+})();
+
+/* ===== agent compare demo ===== */
+const AG_TASKS=[
+ '打开案件文件夹 · 读取 <b>32 份卷宗</b>',
+ '逐份提取时间节点（合同、公告、付息、诉讼）',
+ '交叉比对 → <b>发现 3 处日期矛盾</b>，标注"待核"',
+ '生成《案件时间轴.xlsx》并保存到案件目录',
+ '回检任务目标 ✓ 完成 · 耗时 4 分 12 秒'
+];
+(function(){
+  const tbox=document.getElementById('agTasks'),bub=document.getElementById('agBub');
+  const loops=[...document.querySelectorAll('#loop .ln')];
+  let timers=[];
+  function clearT(){timers.forEach(t=>clearTimeout(t));timers=[]}
+  function T(fn,ms){timers.push(setTimeout(fn,ms))}
+  document.getElementById('agRun').onclick=()=>{
+    clearT();tbox.innerHTML='';bub.classList.remove('in');
+    loops.forEach(l=>l.classList.remove('lit'));
+    T(()=>bub.classList.add('in'),500);
+    AG_TASKS.forEach((t,i)=>{
+      T(()=>{
+        const el=document.createElement('div');el.className='ag-task';
+        el.innerHTML='<span class="ck"></span><span>'+t+'</span>';
+        tbox.appendChild(el);
+        requestAnimationFrame(()=>el.classList.add('in'));
+        T(()=>{el.classList.add('done');el.querySelector('.ck').textContent='✓';},700);
+        loops.forEach(l=>l.classList.remove('lit'));
+        loops[i%4].classList.add('lit');
+      },700+i*1100);
+    });
+    T(()=>loops.forEach(l=>l.classList.add('lit')),700+AG_TASKS.length*1100);
+  };
+})();
+
+/* ===== vendor tabs ===== */
+(function(){
+  const tabs=[...document.querySelectorAll('.vtab')],panels=[...document.querySelectorAll('.vpanel')];
+  tabs.forEach(t=>t.onclick=()=>{
+    tabs.forEach(x=>x.classList.remove('on'));panels.forEach(p=>p.classList.remove('on'));
+    t.classList.add('on');panels.find(p=>p.dataset.k===t.dataset.k).classList.add('on');
+  });
+})();
+</script>
+</body>
+</html>
