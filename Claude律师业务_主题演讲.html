@@ -356,8 +356,9 @@
   .pageno{position:fixed;top:22px;right:34px;color:var(--dim);font-size:13px;z-index:50;letter-spacing:.1em}
   .secname{position:fixed;top:22px;left:34px;color:var(--gold2);font-size:12.5px;z-index:50;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
   .nav{position:fixed;bottom:24px;right:32px;display:flex;gap:10px;z-index:50}
-  .nav button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:rgba(8,15,28,.7);color:var(--gold2);font-size:18px;cursor:pointer;backdrop-filter:blur(8px);transition:.2s}
-  .nav button:hover{background:var(--gold);color:#1a1205}
+  .nav button,.nav a.home{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:rgba(8,15,28,.7);color:var(--gold2);font-size:18px;cursor:pointer;backdrop-filter:blur(8px);transition:.2s}
+  .nav a.home{display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:20px}
+  .nav button:hover,.nav a.home:hover{background:var(--gold);color:#1a1205}
   .dots{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:50;max-width:60vw;flex-wrap:wrap;justify-content:center}
   .dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.16);cursor:pointer;transition:.2s}
   .dots i.on{background:var(--gold);transform:scale(1.4)}
@@ -814,7 +815,7 @@
 </div>
 
 <div class="dots" id="dots"></div>
-<div class="nav"><button id="prev">‹</button><button id="next">›</button></div>
+<div class="nav"><a class="home" href="index.html" title="回总入口">⌂</a><button id="prev">‹</button><button id="next">›</button></div>
 <div class="hint">用 <kbd>←</kbd> <kbd>→</kbd> 翻页 · <kbd>F</kbd> 全屏 · <kbd>A</kbd> 自动巡演</div>
 <div class="autobadge" id="autoBadge"><span class="spin">⟳</span> 自动巡演中 · 按 <kbd>A</kbd> 或翻页键退出</div>
 
