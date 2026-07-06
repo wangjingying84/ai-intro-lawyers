@@ -21,9 +21,10 @@
   #bgfx{position:fixed;inset:0;z-index:0}
   .deck{position:fixed;inset:0;z-index:1}
   .slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
-    padding:6vh 7vw;opacity:0;transform:translateY(30px) scale(.992);
-    transition:opacity .55s cubic-bezier(.2,.7,.2,1),transform .55s cubic-bezier(.2,.7,.2,1);
+    padding:6vh 7vw;opacity:0;transform:translateX(72px);
+    transition:opacity .5s cubic-bezier(.2,.7,.2,1),transform .5s cubic-bezier(.2,.7,.2,1);
     pointer-events:none;overflow:hidden}
+  .slide.rev{transform:translateX(-72px)}
   .slide.active{opacity:1;transform:none;pointer-events:auto}
   .kicker{color:var(--gold);letter-spacing:.34em;font-size:12.5px;font-weight:700;margin-bottom:16px;text-transform:uppercase}
   .kicker .seg{color:var(--cyan)}
@@ -829,13 +830,33 @@ slides.forEach((_,i)=>{const d=document.createElement('i');if(!i)d.classList.add
 const dotEls=[...dots.children];
 function go(i){
   i=Math.max(0,Math.min(N-1,i));
-  slides[cur].classList.remove('active');dotEls[cur].classList.remove('on');
-  cur=i;slides[cur].classList.add('active');dotEls[cur].classList.add('on');
+  if(i===cur)return;
+  const dir=i>cur?1:-1;                    /* 1=向前翻：旧页左出、新页右进 */
+  const old=slides[cur];
+  old.classList.remove('active');
+  old.classList.toggle('rev',dir>0);       /* 旧页退场方向 */
+  dotEls[cur].classList.remove('on');
+  cur=i;
+  const nxt=slides[cur];
+  nxt.classList.toggle('rev',dir<0);       /* 新页入场起点 */
+  void nxt.offsetWidth;                    /* 强制重排，让起点先生效 */
+  nxt.classList.add('active');
+  dotEls[cur].classList.add('on');
   document.getElementById('prog').style.width=((i+1)/N*100)+'%';
   document.getElementById('pno').textContent=String(i+1).padStart(2,'0');
   document.getElementById('secname').textContent=slides[i].dataset.sec||'';
   onEnter(i);
 }
+/* 触屏左右滑动翻页 */
+(function(){
+  let sx=0,sy=0,st=0;
+  addEventListener('touchstart',e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY;st=Date.now();},{passive:true});
+  addEventListener('touchend',e=>{
+    if(e.target.closest('button,a,input,textarea,.tab,.qprin,.dots'))return;
+    const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(Date.now()-st<600&&Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)go(cur+(dx<0?1:-1));
+  },{passive:true});
+})();
 document.getElementById('next').onclick=()=>go(cur+1);
 document.getElementById('prev').onclick=()=>go(cur-1);
 addEventListener('keydown',e=>{
