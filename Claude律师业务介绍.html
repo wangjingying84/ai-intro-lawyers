@@ -109,8 +109,9 @@
   /* ---- before/after slider ---- */
   .ba{position:relative;border:1px solid var(--line);border-radius:16px;overflow:hidden;height:48vh;user-select:none;background:#0a1320}
   .ba-pane{position:absolute;inset:0;padding:30px 34px;display:flex;flex-direction:column;justify-content:center}
-  .ba-pane.after{background:linear-gradient(120deg,#10243a,#0a1320);clip-path:inset(0 0 0 50%)}
-  .ba-pane.before{background:linear-gradient(120deg,#231a14,#150f0a)}
+  .ba-col{width:100%;max-width:calc(50% - 30px)}
+  .ba-pane.before{background:linear-gradient(120deg,#231a14,#150f0a);align-items:flex-start}
+  .ba-pane.after{background:linear-gradient(120deg,#10243a,#0a1320);clip-path:inset(0 0 0 50%);align-items:flex-end}
   .ba h4{font-family:var(--serif);font-size:22px;margin-bottom:14px}
   .ba ul{list-style:none;color:var(--muted);font-size:14px;line-height:2.1}
   .ba li::before{content:"—";color:var(--gold);margin-right:10px}
@@ -183,6 +184,8 @@
     .out,.doc{min-height:auto}
     .ba{height:auto;display:flex;flex-direction:column}
     .ba-pane{position:relative;inset:auto;padding:44px 22px 26px}
+    .ba-pane.before,.ba-pane.after{align-items:stretch}
+    .ba-col{max-width:none}
     .ba-pane.after{clip-path:none;border-top:1px solid var(--line)}
     .ba-handle,.ba-grip{display:none}
     .flow{gap:10px}
@@ -276,25 +279,29 @@
     <div class="ba" id="ba" style="margin-top:24px">
       <div class="ba-pane before">
         <span class="ba-label l">传统方式</span>
-        <h4 style="color:#d8c4a8">人工逐条审 · 一份并购合同</h4>
-        <div class="big">3.5 小时</div>
-        <ul>
-          <li>逐条人眼比对模板库</li>
-          <li>风险点靠记忆与经验</li>
-          <li>引用法条需另行查证</li>
-          <li>夜里加班，错漏难免</li>
-        </ul>
+        <div class="ba-col">
+          <h4 style="color:#d8c4a8">人工逐条审 · 一份并购合同</h4>
+          <div class="big">3.5 小时</div>
+          <ul>
+            <li>逐条人眼比对模板库</li>
+            <li>风险点靠记忆与经验</li>
+            <li>引用法条需另行查证</li>
+            <li>夜里加班，错漏难免</li>
+          </ul>
+        </div>
       </div>
       <div class="ba-pane after">
         <span class="ba-label r">Claude 协作</span>
-        <h4 class="gold">先过一遍 · 律师做终审</h4>
-        <div class="big">15 分钟</div>
-        <ul>
-          <li>全文标注 + 风险分级</li>
-          <li>缺失条款主动提示</li>
-          <li>引用即时附法条出处</li>
-          <li>律师精力用在判断上</li>
-        </ul>
+        <div class="ba-col">
+          <h4 class="gold">先过一遍 · 律师做终审</h4>
+          <div class="big">15 分钟</div>
+          <ul>
+            <li>全文标注 + 风险分级</li>
+            <li>缺失条款主动提示</li>
+            <li>引用即时附法条出处</li>
+            <li>律师精力用在判断上</li>
+          </ul>
+        </div>
       </div>
       <div class="ba-handle" id="baHandle"><div class="ba-grip">⇆</div></div>
     </div>
