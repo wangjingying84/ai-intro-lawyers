@@ -399,7 +399,9 @@
 <!-- chrome -->
 <div class="dots" id="dots"></div>
 <div class="nav"><a class="home" href="index.html" title="回总入口">⌂</a><button id="prev">‹</button><button id="next">›</button></div>
-<div class="hint">用 <kbd>←</kbd> <kbd>→</kbd> 翻页 · <kbd>F</kbd> 全屏</div>
+<div class="hint">用 <kbd>←</kbd> <kbd>→</kbd> 翻页 · <kbd>F</kbd> 全屏 · <kbd>A</kbd> 自动放映</div>
+<div id="autoBadge" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:70;align-items:center;gap:8px;background:rgba(13,23,38,.85);border:1px solid var(--line);border-radius:999px;padding:7px 16px;font-size:12.5px;color:var(--gold-soft);backdrop-filter:blur(8px)"><span style="display:inline-block;animation:baspin 2.4s linear infinite">⟳</span> 自动放映中 · 按 <kbd>A</kbd> 或方向键退出</div>
+<style>@keyframes baspin{to{transform:rotate(360deg)}}</style>
 
 <script>
 const slides=[...document.querySelectorAll('.slide')];
@@ -493,6 +495,33 @@ function runDemo(){
   typing=setInterval(tick,speed*4);
 }
 document.getElementById('runDemo').onclick=runDemo;
+
+/* ---- 自动放映：按 A 启停 / 链接加 ?auto 打开即播（会前大屏循环·录屏用） ---- */
+(function(){
+  let on=false,timers=[];
+  const badge=document.getElementById('autoBadge');
+  const qs=new URLSearchParams(location.search);
+  const autoParam=qs.has('auto');
+  const base=Math.max(2,parseFloat(qs.get('auto'))||7)*1000;   /* 每页停留秒数，默认 7 */
+  function clearT(){timers.forEach(t=>clearTimeout(t));timers=[]}
+  function T(fn,ms){timers.push(setTimeout(fn,ms))}
+  function stop(){on=false;clearT();badge.style.display='none'}
+  function start(){if(on)return;on=true;badge.style.display='flex';step();}
+  function step(){
+    if(!on)return;
+    const s=slides[cur];
+    let dwell=base;
+    const btn=s.querySelector('button.btn');            /* P3 合同审查演示按钮 */
+    if(btn){T(()=>{if(on)btn.click()},900);dwell=base*1.8;}
+    T(()=>{if(!on)return;go((cur+1)%N);step();},dwell); /* 到末页循环回第一页 */
+  }
+  addEventListener('keydown',e=>{
+    const k=e.key.toLowerCase();
+    if(k==='a'){ if(on)stop(); else start(); }
+    else if(on&&(e.key==='ArrowRight'||e.key==='ArrowLeft'||e.key===' ')){stop();}
+  });
+  if(autoParam){ go(0); start(); }   /* 打开链接即自动放映 */
+})();
 
 /* ---- before/after slider ---- */
 (function(){
