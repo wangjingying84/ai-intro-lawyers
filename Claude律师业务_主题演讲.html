@@ -1422,29 +1422,33 @@ function onEnter(i){
 }
 document.getElementById('runRes').onclick=()=>RES.run();
 
-/* ===== auto tour (kiosk) mode — 按 A 启停，会前暖场/录屏用 ===== */
+/* ===== auto tour (kiosk) mode — 按 A 启停 / 链接加 ?auto 自动放映（会前暖场·大屏循环·录屏用） ===== */
 (function(){
   let on=false,timers=[];
   const badge=document.getElementById('autoBadge');
+  /* URL 参数：?auto 打开即自动放映；?auto=8 自定义每页停留秒数（默认 7） */
+  const qs=new URLSearchParams(location.search);
+  const autoParam=qs.has('auto');
+  const base=Math.max(2,parseFloat(qs.get('auto'))||7)*1000;
   function clearT(){timers.forEach(t=>clearTimeout(t));timers=[]}
   function T(fn,ms){timers.push(setTimeout(fn,ms))}
   function stop(){on=false;clearT();badge.style.display='none'}
+  function start(){if(on)return;on=true;badge.style.display='flex';step();}
   function step(){
     if(!on)return;
     const s=slides[cur];
-    let dwell=7000;
-    if(s.classList.contains('divider'))dwell=3500;
+    let dwell=base;                                  /* 内容页停留 */
+    if(s.classList.contains('divider'))dwell=base*0.5; /* 分章页减半 */
     const btn=s.querySelector('button.btn');
-    if(btn){T(()=>{if(on)btn.click()},1000);dwell=14000;}
-    T(()=>{if(!on)return;go((cur+1)%N);step();},dwell);
+    if(btn){T(()=>{if(on)btn.click()},1000);dwell=base*2;} /* 有演示按钮：自动点一次，多停留 */
+    T(()=>{if(!on)return;go((cur+1)%N);step();},dwell);   /* 到末页循环回第一页 */
   }
   addEventListener('keydown',e=>{
     const k=e.key.toLowerCase();
-    if(k==='a'){
-      if(on)stop();
-      else{on=true;badge.style.display='flex';step();}
-    }else if(on&&(e.key==='ArrowRight'||e.key==='ArrowLeft'||e.key===' ')){stop();}
+    if(k==='a'){ if(on)stop(); else start(); }
+    else if(on&&(e.key==='ArrowRight'||e.key==='ArrowLeft'||e.key===' ')){stop();}
   });
+  if(autoParam){ go(0); start(); }   /* 打开链接即自动放映 */
 })();
 </script>
 </body>
